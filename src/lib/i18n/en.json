@@ -20,6 +20,11 @@
 		"3d": "3D",
 		"2d": "2D"
 	},
+	"motion": {
+		"label": "Animations",
+		"on": "Animations on",
+		"off": "Animations off"
+	},
 	"molecule": {
 		"title": "Molecule viewer",
 		"smiles": "SMILES",
@@ -28,11 +33,36 @@
 		"formula": "Formula",
 		"weight": "Molecular weight",
 		"examples": "Examples",
-		"loading": "Loading OpenChemLib…"
+		"loading": "Loading OpenChemLib…",
+		"library": "Molecule library",
+		"librarySearch": "Search by name or formula…",
+		"empty": "No matches — try a different name"
+	},
+	"molCategory": {
+		"inorganic": "Inorganic",
+		"acid": "Acids",
+		"organic": "Simple organics",
+		"aromatic": "Aromatics",
+		"biology": "Biochemistry",
+		"drug": "Drugs & everyday"
+	},
+	"glossary": {
+		"title": "Glossary",
+		"intro": "Short definitions of chemistry terms. Tell me if anything is missing.",
+		"search": "Search by term…",
+		"empty": "Nothing matches your query",
+		"category": {
+			"basics": "Basics",
+			"atom": "Atom & electron",
+			"bond": "Bonds & interactions",
+			"reaction": "Reactions",
+			"thermo": "Properties & measurement"
+		}
 	},
 	"nav": {
 		"table": "Periodic table",
-		"molecule": "Molecules"
+		"molecule": "Molecules",
+		"glossary": "Glossary"
 	},
 	"element": {
 		"number": "Atomic number",

@@ -46,7 +46,10 @@ describe('shellDistribution', () => {
 	it('сумма электронов всегда равна Z', () => {
 		for (const z of [1, 5, 11, 26, 50, 82, 100, 118]) {
 			const dist = shellDistribution(z);
-			expect(dist.reduce((a, b) => a + b, 0), `Z=${z}`).toBe(z);
+			expect(
+				dist.reduce((a, b) => a + b, 0),
+				`Z=${z}`
+			).toBe(z);
 		}
 	});
 });

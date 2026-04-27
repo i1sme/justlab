@@ -12,9 +12,11 @@ export interface MountAtomSceneOptions {
 	symbol: string;
 	shells: ReadonlyArray<number>;
 	reducedQuality?: boolean;
+	motionEnabled?: boolean;
 }
 
 export interface AtomSceneHandle {
+	setMotion(enabled: boolean): void;
 	dispose(): void;
 }
 
@@ -29,6 +31,7 @@ export function mountAtomScene(
 	opts: MountAtomSceneOptions
 ): AtomSceneHandle {
 	const { symbol, shells, reducedQuality = false } = opts;
+	let motionOn = opts.motionEnabled !== false;
 
 	const renderer = new THREE.WebGLRenderer({
 		canvas,
@@ -121,14 +124,12 @@ export function mountAtomScene(
 	camera.lookAt(0, 0, 0);
 
 	const controls = new OrbitControls(camera, canvas);
-	controls.enableDamping = true;
 	controls.enablePan = false;
 	controls.minDistance = camDist * 0.4;
 	controls.maxDistance = camDist * 2.5;
-
-	const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-	controls.autoRotate = !reducedMotion;
 	controls.autoRotateSpeed = 0.7;
+	controls.enableDamping = motionOn;
+	controls.autoRotate = motionOn;
 
 	function resize(): void {
 		const w = canvas.clientWidth || 1;
@@ -136,28 +137,59 @@ export function mountAtomScene(
 		renderer.setSize(w, h, false);
 		camera.aspect = w / h;
 		camera.updateProjectionMatrix();
+		if (!motionOn) renderer.render(scene, camera);
 	}
 	const ro = new ResizeObserver(resize);
 	ro.observe(canvas);
 	resize();
 
 	let frameId: number | null = null;
+	function onControlsChange(): void {
+		renderer.render(scene, camera);
+	}
 	function frame(): void {
 		frameId = requestAnimationFrame(frame);
 		controls.update();
 		renderer.render(scene, camera);
 	}
-	if (reducedMotion) {
-		controls.enableDamping = false;
-		controls.addEventListener('change', () => renderer.render(scene, camera));
-		renderer.render(scene, camera);
-	} else {
+	function startLoop(): void {
+		if (frameId !== null) return;
 		frame();
+	}
+	function stopLoop(): void {
+		if (frameId !== null) {
+			cancelAnimationFrame(frameId);
+			frameId = null;
+		}
+	}
+
+	if (motionOn) {
+		startLoop();
+	} else {
+		controls.addEventListener('change', onControlsChange);
+		renderer.render(scene, camera);
 	}
 
 	return {
+		setMotion(enabled) {
+			if (motionOn === enabled) return;
+			motionOn = enabled;
+			if (enabled) {
+				controls.removeEventListener('change', onControlsChange);
+				controls.enableDamping = true;
+				controls.autoRotate = true;
+				startLoop();
+			} else {
+				stopLoop();
+				controls.autoRotate = false;
+				controls.enableDamping = false;
+				controls.addEventListener('change', onControlsChange);
+				renderer.render(scene, camera);
+			}
+		},
 		dispose() {
-			if (frameId !== null) cancelAnimationFrame(frameId);
+			stopLoop();
+			controls.removeEventListener('change', onControlsChange);
 			ro.disconnect();
 			controls.dispose();
 			for (const ring of ringMeshes) ring.removeFromParent();

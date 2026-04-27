@@ -4,7 +4,7 @@
 // - 118 карточек = 118 mesh'ей. InstancedMesh здесь не подходит: у каждой карточки уникальный CanvasTexture.
 // - Текст бэкаем в маленький canvas (256×256), переводим в CanvasTexture — крестиком cheap, читаемо при умеренном зуме.
 // - Adaptive quality: pixelRatio ограничен 1.5; antialias включается только при devicePixelRatio < 2.
-// - prefers-reduced-motion → один render() без анимационного цикла.
+// - motion-toggle: можно отключать ambient-анимации (parallax, lerp); user-driven (hover/select) остаются мгновенными.
 // - В dispose() освобождаем все GPU-ресурсы (textures, geometry, renderer).
 
 import * as THREE from 'three';
@@ -21,17 +21,22 @@ const F_BLOCK_OFFSET = 0.7;
 /** Геометрический центр сетки по строкам (для 9 рядов с отступом). */
 const ROW_MID = 5.35;
 
+const HOVER_LIFT = 0.6;
+const SELECT_LIFT = 0.35;
+const SELECT_HALO_COLOR = 0x2563eb; // blue-600
+
 export interface MountSceneOptions {
 	onSelect?: (el: PeriodicElement) => void;
 	onHover?: (el: PeriodicElement | null) => void;
 	/** Снизить качество, если детектор сообщил 'low'. */
 	reducedQuality?: boolean;
+	/** Включить ambient-анимации (parallax + lerp). По умолчанию true. */
+	motionEnabled?: boolean;
 }
 
 export interface SceneHandle {
-	/** Подсветить выбранный элемент (приподнять и навести outline-эффект). */
 	setSelected(num: number | null): void;
-	/** Освободить все GPU-ресурсы и слушатели. Вызывать при unmount. */
+	setMotion(enabled: boolean): void;
 	dispose(): void;
 }
 
@@ -40,6 +45,7 @@ export function mountPeriodicTableScene(
 	opts: MountSceneOptions = {}
 ): SceneHandle {
 	const reduced = opts.reducedQuality === true;
+	let motionOn = opts.motionEnabled !== false;
 
 	// ---------- Renderer ----------
 	const dpr = Math.min(window.devicePixelRatio, reduced ? 1 : 1.5);
@@ -54,7 +60,6 @@ export function mountPeriodicTableScene(
 	// ---------- Scene & camera ----------
 	const scene = new THREE.Scene();
 	const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
-	// Фронтальный вид: камера прямо перед таблицей, без наклона.
 	camera.position.set(0, 0, 17);
 	camera.lookAt(0, 0, 0);
 
@@ -70,15 +75,26 @@ export function mountPeriodicTableScene(
 	const elementByMesh = new Map<THREE.Mesh, PeriodicElement>();
 	const meshByNumber = new Map<number, THREE.Mesh>();
 
+	// Размер текстуры карточки: больше — резче текст, но больше GPU-памяти.
+	// 384²×4×118 ≈ 70 MB; 256²×4×118 ≈ 30 MB — на low-quality остаёмся на 256.
+	const textureSize = reduced ? 256 : 384;
+	const maxAniso = renderer.capabilities.getMaxAnisotropy();
+
 	for (const el of ELEMENTS) {
-		const tex = makeSymbolTexture(el.symbol, el.number, CATEGORY_COLORS[el.category]);
+		const tex = makeSymbolTexture(
+			el.symbol,
+			el.number,
+			el.atomicMass,
+			CATEGORY_COLORS[el.category],
+			textureSize,
+			maxAniso
+		);
 		const mat = new THREE.MeshLambertMaterial({ map: tex });
 		const mesh = new THREE.Mesh(cardGeometry, mat);
 
 		const x = (el.gridCol - 9.5) * STEP_X;
 		const visualRow = el.gridRow >= 8 ? el.gridRow + F_BLOCK_OFFSET : el.gridRow;
 		const y = -(visualRow - ROW_MID) * STEP_Y;
-		// XY фиксированы; интерактивный лифт — только по Z (карточка выезжает вперёд).
 		mesh.position.set(x, y, 0);
 
 		scene.add(mesh);
@@ -86,6 +102,20 @@ export function mountPeriodicTableScene(
 		elementByMesh.set(mesh, el);
 		meshByNumber.set(el.number, mesh);
 	}
+
+	// ---------- Halo подсветка выбранного ----------
+	// Чуть больший плоский квадрат позади карточки, ярко-синий полупрозрачный.
+	// Виден только когда selectedNumber !== null.
+	const haloGeometry = new THREE.PlaneGeometry(CARD_W * 1.35, CARD_H * 1.35);
+	const haloMaterial = new THREE.MeshBasicMaterial({
+		color: SELECT_HALO_COLOR,
+		transparent: true,
+		opacity: 0.55,
+		depthWrite: false
+	});
+	const halo = new THREE.Mesh(haloGeometry, haloMaterial);
+	halo.visible = false;
+	scene.add(halo);
 
 	// ---------- State ----------
 	let hoveredMesh: THREE.Mesh | null = null;
@@ -111,9 +141,40 @@ export function mountPeriodicTableScene(
 		return elementByMesh.get(hit.object as THREE.Mesh) ?? null;
 	}
 
+	function applyTargetsInstant(): void {
+		// Снимаем все z-смещения мгновенно (без lerp) — для motion-off.
+		for (const mesh of cards) {
+			const el = elementByMesh.get(mesh);
+			if (!el) continue;
+			const isHovered = mesh === hoveredMesh;
+			const isSelected = el.number === selectedNumber;
+			mesh.position.z = (isHovered ? HOVER_LIFT : 0) + (isSelected ? SELECT_LIFT : 0);
+		}
+		parallax.set(0, 0);
+		camera.position.set(0, 0, 17);
+		camera.lookAt(0, 0, 0);
+	}
+
+	function updateHalo(): void {
+		if (selectedNumber === null) {
+			halo.visible = false;
+			return;
+		}
+		const target = meshByNumber.get(selectedNumber);
+		if (!target) {
+			halo.visible = false;
+			return;
+		}
+		halo.visible = true;
+		halo.position.set(target.position.x, target.position.y, target.position.z - CARD_D / 2 - 0.01);
+	}
+
+	function renderNow(): void {
+		renderer.render(scene, camera);
+	}
+
 	function onPointerMove(e: PointerEvent): void {
 		pointerToNDC(e);
-		// Сдержанный parallax — view остаётся в основном фронтальным.
 		targetParallax.set(ndc.x * 0.25, ndc.y * 0.15);
 
 		const el = pick();
@@ -122,18 +183,28 @@ export function mountPeriodicTableScene(
 			hoveredMesh = newHover;
 			opts.onHover?.(el);
 			canvas.style.cursor = newHover ? 'pointer' : 'default';
+			if (!motionOn) {
+				applyTargetsInstant();
+				updateHalo();
+				renderNow();
+			}
 		}
 	}
 
 	function onPointerLeave(): void {
+		const had = hoveredMesh !== null;
 		hoveredMesh = null;
 		opts.onHover?.(null);
 		canvas.style.cursor = 'default';
 		targetParallax.set(0, 0);
+		if (!motionOn && had) {
+			applyTargetsInstant();
+			updateHalo();
+			renderNow();
+		}
 	}
 
 	function onPointerDown(e: PointerEvent): void {
-		// Запоминаем кандидата клика; финализируем на pointerup, если палец/мышь не уехали.
 		pointerToNDC(e);
 		pendingClick = pick();
 	}
@@ -161,6 +232,7 @@ export function mountPeriodicTableScene(
 		renderer.setSize(w, h, false);
 		camera.aspect = w / h;
 		camera.updateProjectionMatrix();
+		if (!motionOn) renderNow();
 	}
 
 	const ro = new ResizeObserver(resize);
@@ -173,18 +245,32 @@ export function mountPeriodicTableScene(
 	function frame(): void {
 		frameId = requestAnimationFrame(frame);
 
-		// Z-лифт: карточка «выезжает вперёд» при hover/selected.
-		// При фронтальной камере это читается как pop-out, а не как движение вверх.
+		// Z-лифт карточек.
 		for (const mesh of cards) {
 			const el = elementByMesh.get(mesh);
 			if (!el) continue;
 			const isHovered = mesh === hoveredMesh;
 			const isSelected = el.number === selectedNumber;
-			const targetZ = (isHovered ? 0.6 : 0) + (isSelected ? 0.2 : 0);
+			const targetZ = (isHovered ? HOVER_LIFT : 0) + (isSelected ? SELECT_LIFT : 0);
 			mesh.position.z += (targetZ - mesh.position.z) * 0.2;
 		}
 
-		// Parallax камеры — сдержанный.
+		// Halo следует за выбранной карточкой (учёт текущего z после lerp).
+		if (selectedNumber !== null) {
+			const target = meshByNumber.get(selectedNumber);
+			if (target) {
+				halo.visible = true;
+				halo.position.set(
+					target.position.x,
+					target.position.y,
+					target.position.z - CARD_D / 2 - 0.01
+				);
+			}
+		} else {
+			halo.visible = false;
+		}
+
+		// Parallax.
 		parallax.lerp(targetParallax, 0.05);
 		camera.position.x = parallax.x;
 		camera.position.y = parallax.y;
@@ -193,30 +279,50 @@ export function mountPeriodicTableScene(
 		renderer.render(scene, camera);
 	}
 
-	const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-	if (reducedMotion) {
-		// Один render — без петли.
-		renderer.render(scene, camera);
-	} else {
+	function startLoop(): void {
+		if (frameId !== null) return;
 		frame();
+	}
+
+	function stopLoop(): void {
+		if (frameId !== null) {
+			cancelAnimationFrame(frameId);
+			frameId = null;
+		}
+	}
+
+	if (motionOn) {
+		startLoop();
+	} else {
+		applyTargetsInstant();
+		updateHalo();
+		renderNow();
 	}
 
 	// ---------- Handle ----------
 	return {
 		setSelected(num) {
 			selectedNumber = num;
-			if (reducedMotion) {
-				// Без петли кадров — выставляем целевые z мгновенно и перерисовываем.
-				for (const mesh of cards) {
-					const el = elementByMesh.get(mesh);
-					if (!el) continue;
-					mesh.position.z = el.number === selectedNumber ? 0.2 : 0;
-				}
-				renderer.render(scene, camera);
+			if (!motionOn) {
+				applyTargetsInstant();
+				updateHalo();
+				renderNow();
+			}
+		},
+		setMotion(enabled) {
+			if (motionOn === enabled) return;
+			motionOn = enabled;
+			if (enabled) {
+				startLoop();
+			} else {
+				stopLoop();
+				applyTargetsInstant();
+				updateHalo();
+				renderNow();
 			}
 		},
 		dispose() {
-			if (frameId !== null) cancelAnimationFrame(frameId);
+			stopLoop();
 			canvas.removeEventListener('pointermove', onPointerMove);
 			canvas.removeEventListener('pointerleave', onPointerLeave);
 			canvas.removeEventListener('pointerdown', onPointerDown);
@@ -230,6 +336,8 @@ export function mountPeriodicTableScene(
 				mat.dispose();
 			}
 			cardGeometry.dispose();
+			haloGeometry.dispose();
+			haloMaterial.dispose();
 			renderer.dispose();
 		}
 	};
@@ -240,9 +348,11 @@ export function mountPeriodicTableScene(
 function makeSymbolTexture(
 	symbol: string,
 	atomicNumber: number,
-	bgHex: string
+	atomicMass: number,
+	bgHex: string,
+	size: number,
+	anisotropy: number
 ): THREE.CanvasTexture {
-	const size = 256;
 	const canvas = document.createElement('canvas');
 	canvas.width = size;
 	canvas.height = size;
@@ -253,21 +363,34 @@ function makeSymbolTexture(
 	ctx.fillStyle = bgHex;
 	ctx.fillRect(0, 0, size, size);
 
-	// Атомный номер (верх-лево).
-	ctx.fillStyle = '#1a1a1a';
-	ctx.font = 'bold 30px ui-sans-serif, system-ui, sans-serif';
+	const fontStack = 'ui-sans-serif, system-ui, -apple-system, sans-serif';
+
+	// Атомный номер — верх-лево.
+	ctx.fillStyle = '#0d0d0d';
+	ctx.font = `bold ${Math.round(size * 0.115)}px ${fontStack}`;
 	ctx.textBaseline = 'top';
 	ctx.textAlign = 'left';
-	ctx.fillText(atomicNumber.toString(), 16, 14);
+	const pad = size * 0.06;
+	ctx.fillText(atomicNumber.toString(), pad, pad);
 
-	// Символ (центр).
-	ctx.font = 'bold 110px ui-sans-serif, system-ui, sans-serif';
+	// Символ — крупно по центру (чуть выше геометрического, чтобы освободить место для массы).
+	ctx.font = `bold ${Math.round(size * 0.42)}px ${fontStack}`;
 	ctx.textAlign = 'center';
 	ctx.textBaseline = 'middle';
-	ctx.fillText(symbol, size / 2, size / 2 + 8);
+	ctx.fillText(symbol, size / 2, size * 0.46);
+
+	// Атомная масса — низ-центр; форматируем как в 2D-таблице.
+	const massText = atomicMass.toFixed(atomicMass < 100 ? 2 : 1);
+	ctx.font = `${Math.round(size * 0.085)}px ${fontStack}`;
+	ctx.textBaseline = 'bottom';
+	ctx.fillStyle = 'rgba(13,13,13,0.85)';
+	ctx.fillText(massText, size / 2, size - pad);
 
 	const texture = new THREE.CanvasTexture(canvas);
 	texture.colorSpace = THREE.SRGBColorSpace;
-	texture.anisotropy = 4;
+	texture.anisotropy = Math.min(anisotropy, 8);
+	texture.generateMipmaps = true;
+	texture.minFilter = THREE.LinearMipmapLinearFilter;
+	texture.magFilter = THREE.LinearFilter;
 	return texture;
 }

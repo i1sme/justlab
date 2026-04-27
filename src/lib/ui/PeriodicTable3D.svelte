@@ -1,9 +1,14 @@
 <script lang="ts">
 	import type { PeriodicElement } from '../../data/elements';
 	import { detectQuality } from '$lib/render3d/webgl-detect';
+	import { getMotionEnabled } from '$lib/settings';
 	import { t } from '$lib/i18n';
 
-	type Handle = { setSelected(n: number | null): void; dispose(): void };
+	type Handle = {
+		setSelected(n: number | null): void;
+		setMotion(enabled: boolean): void;
+		dispose(): void;
+	};
 
 	type Props = {
 		onSelect?: (el: PeriodicElement) => void;
@@ -35,7 +40,8 @@
 					onHover: (el) => {
 						hovered = el;
 					},
-					reducedQuality: quality === 'low'
+					reducedQuality: quality === 'low',
+					motionEnabled: getMotionEnabled()
 				});
 				handle = local;
 			} catch (err) {
@@ -53,6 +59,11 @@
 	// Прокидываем выбор от родителя в сцену.
 	$effect(() => {
 		handle?.setSelected(selectedNumber);
+	});
+
+	// Реактивно реагируем на изменение глобального motion-setting.
+	$effect(() => {
+		handle?.setMotion(getMotionEnabled());
 	});
 </script>
 

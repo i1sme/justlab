@@ -2,13 +2,15 @@
 	import type { PeriodicElement } from '../../data/elements';
 	import { shellDistribution } from '$lib/chemistry/electron-config';
 	import { detectQuality } from '$lib/render3d/webgl-detect';
+	import { getMotionEnabled } from '$lib/settings';
 
-	type Handle = { dispose(): void };
+	type Handle = { setMotion(enabled: boolean): void; dispose(): void };
 
 	type Props = { element: PeriodicElement };
 	let { element }: Props = $props();
 
 	let canvasEl: HTMLCanvasElement | null = $state(null);
+	let handle: Handle | null = $state(null);
 	let loadError: string | null = $state(null);
 
 	$effect(() => {
@@ -28,8 +30,10 @@
 					atomicNumber: el.number,
 					symbol: el.symbol,
 					shells: shellDistribution(el.number),
-					reducedQuality: quality === 'low'
+					reducedQuality: quality === 'low',
+					motionEnabled: getMotionEnabled()
 				});
+				handle = local;
 			} catch (err) {
 				loadError = err instanceof Error ? err.message : String(err);
 			}
@@ -38,7 +42,12 @@
 		return () => {
 			cancelled = true;
 			local?.dispose();
+			handle = null;
 		};
+	});
+
+	$effect(() => {
+		handle?.setMotion(getMotionEnabled());
 	});
 </script>
 

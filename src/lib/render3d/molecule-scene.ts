@@ -15,9 +15,11 @@ export interface MountMoleculeSceneOptions {
 	atoms: ReadonlyArray<MoleculeAtom>;
 	bonds: ReadonlyArray<MoleculeBond>;
 	reducedQuality?: boolean;
+	motionEnabled?: boolean;
 }
 
 export interface MoleculeSceneHandle {
+	setMotion(enabled: boolean): void;
 	dispose(): void;
 }
 
@@ -31,6 +33,7 @@ export function mountMoleculeScene(
 	opts: MountMoleculeSceneOptions
 ): MoleculeSceneHandle {
 	const { atoms, bonds, reducedQuality = false } = opts;
+	let motionOn = opts.motionEnabled !== false;
 
 	// ---- Renderer ----
 	const renderer = new THREE.WebGLRenderer({
@@ -166,11 +169,11 @@ export function mountMoleculeScene(
 
 	// ---- OrbitControls ----
 	const controls = new OrbitControls(camera, canvas);
-	controls.enableDamping = true;
 	controls.dampingFactor = 0.08;
 	controls.enablePan = false;
 	controls.minDistance = camDist * 0.4;
 	controls.maxDistance = camDist * 3;
+	controls.enableDamping = motionOn;
 
 	// ---- Resize ----
 	function resize(): void {
@@ -186,27 +189,53 @@ export function mountMoleculeScene(
 
 	// ---- Anim loop ----
 	let frameId: number | null = null;
-	const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
+	function renderNow(): void {
+		renderer.render(scene, camera);
+	}
+	function onControlsChange(): void {
+		renderer.render(scene, camera);
+	}
 	function frame(): void {
 		frameId = requestAnimationFrame(frame);
 		controls.update();
 		renderer.render(scene, camera);
 	}
-
-	if (reducedMotion) {
-		// Для reduced-motion отключаем damping и не крутим петлю фоном — рисуем по событиям controls.
-		controls.enableDamping = false;
-		controls.addEventListener('change', () => renderer.render(scene, camera));
-		renderer.render(scene, camera);
-	} else {
+	function startLoop(): void {
+		if (frameId !== null) return;
 		frame();
 	}
+	function stopLoop(): void {
+		if (frameId !== null) {
+			cancelAnimationFrame(frameId);
+			frameId = null;
+		}
+	}
 
-	// ---- Cleanup ----
+	if (motionOn) {
+		startLoop();
+	} else {
+		controls.addEventListener('change', onControlsChange);
+		renderNow();
+	}
+
 	return {
+		setMotion(enabled) {
+			if (motionOn === enabled) return;
+			motionOn = enabled;
+			if (enabled) {
+				controls.removeEventListener('change', onControlsChange);
+				controls.enableDamping = true;
+				startLoop();
+			} else {
+				stopLoop();
+				controls.enableDamping = false;
+				controls.addEventListener('change', onControlsChange);
+				renderNow();
+			}
+		},
 		dispose() {
-			if (frameId !== null) cancelAnimationFrame(frameId);
+			stopLoop();
+			controls.removeEventListener('change', onControlsChange);
 			ro.disconnect();
 			controls.dispose();
 			for (const inst of instancedMeshes) {
@@ -214,7 +243,6 @@ export function mountMoleculeScene(
 			}
 			for (const mat of atomMaterials) mat.dispose();
 			for (const mesh of bondMeshes) {
-				// геометрия и материал общие — их освободим в конце
 				mesh.removeFromParent();
 			}
 			atomGeometry.dispose();

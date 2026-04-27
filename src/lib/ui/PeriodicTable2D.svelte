@@ -125,24 +125,32 @@
 		position: relative;
 	}
 	.cell-selected {
-		outline: 2px solid #1d4ed8;
-		outline-offset: 1px;
-		z-index: 5;
+		/* Жирная двойная рамка + ярко-синее свечение, чтобы место выбора было сразу видно. */
+		outline: 3px solid #2563eb;
+		outline-offset: 2px;
+		box-shadow:
+			0 0 0 6px rgba(37, 99, 235, 0.25),
+			0 6px 16px rgba(37, 99, 235, 0.35);
+		transform: scale(1.1);
+		z-index: 8;
 		position: relative;
 	}
+	.cell-selected:hover {
+		transform: scale(1.18);
+	}
 	.cell-number {
-		font-size: 10px;
+		font-size: 11px;
 		font-weight: 500;
 		line-height: 1;
 	}
 	.cell-symbol {
-		font-size: 16px;
+		font-size: 18px;
 		font-weight: 700;
 		line-height: 1;
 		text-align: center;
 	}
 	.cell-mass {
-		font-size: 8px;
+		font-size: 10px;
 		line-height: 1;
 		text-align: center;
 		opacity: 0.85;

@@ -1,8 +1,9 @@
 <script lang="ts">
 	import type { MoleculeAtom, MoleculeBond } from '$lib/chemistry/openchemlib';
 	import { detectQuality } from '$lib/render3d/webgl-detect';
+	import { getMotionEnabled } from '$lib/settings';
 
-	type Handle = { dispose(): void };
+	type Handle = { setMotion(enabled: boolean): void; dispose(): void };
 
 	type Props = {
 		atoms: ReadonlyArray<MoleculeAtom>;
@@ -12,6 +13,7 @@
 	let { atoms, bonds }: Props = $props();
 
 	let canvasEl: HTMLCanvasElement | null = $state(null);
+	let handle: Handle | null = $state(null);
 	let loadError: string | null = $state(null);
 
 	$effect(() => {
@@ -31,8 +33,10 @@
 				local = mod.mountMoleculeScene(target, {
 					atoms: a,
 					bonds: b,
-					reducedQuality: quality === 'low'
+					reducedQuality: quality === 'low',
+					motionEnabled: getMotionEnabled()
 				});
+				handle = local;
 			} catch (err) {
 				loadError = err instanceof Error ? err.message : String(err);
 			}
@@ -41,7 +45,12 @@
 		return () => {
 			cancelled = true;
 			local?.dispose();
+			handle = null;
 		};
+	});
+
+	$effect(() => {
+		handle?.setMotion(getMotionEnabled());
 	});
 </script>
 

@@ -4,6 +4,7 @@
 	import { page } from '$app/state';
 	import { resolve } from '$app/paths';
 	import LocaleSwitcher from '$lib/ui/LocaleSwitcher.svelte';
+	import MotionToggle from '$lib/ui/MotionToggle.svelte';
 	import { t } from '$lib/i18n';
 
 	let { children } = $props();
@@ -11,7 +12,8 @@
 	// resolve(...) — SvelteKit-aware абсолютный путь (учитывает base path и т.п.).
 	const navItems = [
 		{ href: resolve('/'), key: 'nav.table' },
-		{ href: resolve('/molecule'), key: 'nav.molecule' }
+		{ href: resolve('/molecule'), key: 'nav.molecule' },
+		{ href: resolve('/glossary'), key: 'nav.glossary' }
 	];
 </script>
 
@@ -43,7 +45,10 @@
 					</a>
 				{/each}
 			</nav>
-			<LocaleSwitcher />
+			<div class="flex items-center gap-2">
+				<MotionToggle />
+				<LocaleSwitcher />
+			</div>
 		</div>
 	</header>
 
