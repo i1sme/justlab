@@ -4,6 +4,55 @@
 		"tagline": "Virtual chemistry lab"
 	},
 	"home": {
-		"soon": "Coming soon: 3D periodic table, molecule viewer, and virtual lab bench with reactions."
+		"intro": "Click or tap an element — its card appears on the side. 3D view is available on WebGL2 devices; otherwise the 2D fallback is used automatically."
+	},
+	"periodicTable": {
+		"title": "Periodic table",
+		"hint": "Hover or tap an element — its card appears on the side.",
+		"legend": "Categories"
+	},
+	"search": {
+		"placeholder": "Search by symbol, name, or number…",
+		"empty": "No matches"
+	},
+	"render": {
+		"label": "Display mode",
+		"3d": "3D",
+		"2d": "2D"
+	},
+	"molecule": {
+		"title": "Molecule viewer",
+		"smiles": "SMILES",
+		"placeholder": "Enter SMILES, e.g. CCO (ethanol)",
+		"invalid": "Could not parse SMILES",
+		"formula": "Formula",
+		"weight": "Molecular weight",
+		"examples": "Examples",
+		"loading": "Loading OpenChemLib…"
+	},
+	"nav": {
+		"table": "Periodic table",
+		"molecule": "Molecules"
+	},
+	"element": {
+		"number": "Atomic number",
+		"mass": "Atomic mass",
+		"period": "Period",
+		"group": "Group",
+		"block": "Block",
+		"category": "Category",
+		"empty": "Pick an element from the table"
+	},
+	"category": {
+		"alkali-metal": "Alkali metal",
+		"alkaline-earth-metal": "Alkaline-earth metal",
+		"transition-metal": "Transition metal",
+		"post-transition-metal": "Post-transition metal",
+		"metalloid": "Metalloid",
+		"nonmetal": "Nonmetal",
+		"halogen": "Halogen",
+		"noble-gas": "Noble gas",
+		"lanthanoid": "Lanthanoid",
+		"actinoid": "Actinoid"
 	}
 }
