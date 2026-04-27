@@ -1,0 +1,9 @@
+{
+	"app": {
+		"title": "justlab",
+		"tagline": "Virtual chemistry lab"
+	},
+	"home": {
+		"soon": "Coming soon: 3D periodic table, molecule viewer, and virtual lab bench with reactions."
+	}
+}
