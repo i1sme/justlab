@@ -2,21 +2,34 @@
 	import {
 		MOLECULES,
 		MOLECULE_CATEGORIES,
+		findSubstance,
 		type CuratedMolecule,
 		type MoleculeCategoryKey
 	} from '../../data';
 	import { getLocale, t } from '$lib/i18n';
+	import { getUserMode, isVisibleAtMode } from '$lib/settings';
 
 	type Props = { onPick: (smiles: string) => void };
 	let { onPick }: Props = $props();
 
 	let query = $state('');
 
+	// Сначала фильтруем по difficulty (режим пользователя), потом по поисковой строке.
+	// В beginner/school режимах university-уровень контента (биология, лекарства) скрыт.
+	const visibleByMode = $derived.by(() => {
+		const mode = getUserMode();
+		return MOLECULES.filter((m) => {
+			const subst = findSubstance(m.key);
+			if (!subst) return true; // если адаптер не нашёл — показываем (защита от расхождений)
+			return isVisibleAtMode(subst.difficulty, mode);
+		});
+	});
+
 	const filtered = $derived.by(() => {
 		const q = query.trim().toLowerCase();
-		if (!q) return MOLECULES;
+		if (!q) return visibleByMode;
 		const locale = getLocale();
-		return MOLECULES.filter(
+		return visibleByMode.filter(
 			(m) =>
 				m.name[locale].toLowerCase().includes(q) ||
 				m.name.en.toLowerCase().includes(q) ||

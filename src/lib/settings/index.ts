@@ -1,1 +1,10 @@
-export { getMotionEnabled, setMotionEnabled, toggleMotion } from './state.svelte';
+export {
+	getMotionEnabled,
+	setMotionEnabled,
+	toggleMotion,
+	getUserMode,
+	getEffectiveUserMode,
+	setUserMode,
+	isVisibleAtMode,
+	type UserMode
+} from './state.svelte';

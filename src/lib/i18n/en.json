@@ -33,6 +33,34 @@
 		"on": "Animations on",
 		"off": "Animations off"
 	},
+	"userMode": {
+		"label": "Level",
+		"current": "Current level: {mode}",
+		"open": "Change level",
+		"beginner": "Beginner",
+		"school": "School",
+		"university": "University"
+	},
+	"wizard": {
+		"title": "Let's tailor this to you",
+		"subtitle": "Pick a level — it controls content depth and how things are explained. You can switch anytime.",
+		"close": "Close",
+		"changeAnytime": "You can change this later via the graduation cap icon in the header.",
+		"modes": {
+			"beginner": {
+				"title": "Beginner",
+				"description": "Starting from scratch. Tooltips and friendly explanations for every term."
+			},
+			"school": {
+				"title": "School",
+				"description": "Grades 5–11. Standard chemistry curriculum without overload."
+			},
+			"university": {
+				"title": "University",
+				"description": "Full content: organic chemistry, mechanisms, spectra, kinetics."
+			}
+		}
+	},
 	"molecule": {
 		"title": "Molecule viewer",
 		"smiles": "SMILES",

@@ -1,10 +1,18 @@
 // Smoke-тесты основных пользовательских путей: главная (таблица),
-// карточка элемента, страница молекул, глоссарий, переключатель локали.
+// карточка элемента, страница молекул, глоссарий, переключатель локали, wizard.
 //
 // Запуск: `npm run test:e2e`. Playwright поднимает `npm run build && npm run preview`
 // перед стартом (см. playwright.config.ts).
 
 import { test, expect } from '@playwright/test';
+
+// По умолчанию подавляем first-run wizard: ставим school в localStorage до загрузки SPA.
+// Тесты, которые проверяют сам wizard, переопределяют это в своём describe.
+test.beforeEach(async ({ context }) => {
+	await context.addInitScript(() => {
+		localStorage.setItem('justlab.userMode', 'school');
+	});
+});
 
 test('home page renders the periodic table', async ({ page }) => {
 	await page.goto('/');
@@ -71,4 +79,38 @@ test('navigation between sections works', async ({ page }) => {
 
 	await page.getByRole('link', { name: /Таблица|Periodic/i }).click();
 	await expect(page).toHaveURL(/^[^/]*\/?$|\/$/);
+});
+
+test.describe('first-run wizard', () => {
+	// Переопределяем глобальный beforeEach: localStorage без userMode → wizard всплывает.
+	test.beforeEach(async ({ context }) => {
+		await context.addInitScript(() => {
+			localStorage.removeItem('justlab.userMode');
+		});
+	});
+
+	test('wizard appears on first visit', async ({ page }) => {
+		await page.goto('/');
+		await expect(page.getByRole('dialog')).toBeVisible();
+		// В заголовке диалога — приветствие.
+		await expect(page.getByRole('dialog')).toContainText(/настроим|tailor/i);
+	});
+
+	test('picking a mode closes wizard and persists in localStorage', async ({ page }) => {
+		await page.goto('/');
+		await expect(page.getByRole('dialog')).toBeVisible();
+
+		// Кликаем по карточке "Школа/School".
+		await page
+			.getByRole('button', { name: /Школа|^School/i })
+			.first()
+			.click();
+
+		await expect(page.getByRole('dialog')).not.toBeVisible();
+
+		// Проверяем persistence напрямую через localStorage —
+		// reload не подходит, потому что addInitScript снова чистит ключ.
+		const stored = await page.evaluate(() => localStorage.getItem('justlab.userMode'));
+		expect(stored).toBe('school');
+	});
 });

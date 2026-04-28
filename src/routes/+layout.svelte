@@ -5,6 +5,9 @@
 	import { resolve } from '$app/paths';
 	import LocaleSwitcher from '$lib/ui/LocaleSwitcher.svelte';
 	import MotionToggle from '$lib/ui/MotionToggle.svelte';
+	import UserModeButton from '$lib/ui/UserModeButton.svelte';
+	import UserModeWizard from '$lib/ui/UserModeWizard.svelte';
+	import { getUserMode } from '$lib/settings';
 	import { t } from '$lib/i18n';
 
 	let { children } = $props();
@@ -15,6 +18,10 @@
 		{ href: resolve('/molecule'), key: 'nav.molecule' },
 		{ href: resolve('/glossary'), key: 'nav.glossary' }
 	];
+
+	// Wizard открывается автоматически при первом заходе (userMode не выбран).
+	// Пользователь может переоткрыть его кликом на иконку «шапочки» в хедере.
+	let wizardOpen = $state(getUserMode() === null);
 </script>
 
 <svelte:head><link rel="icon" href={favicon} /></svelte:head>
@@ -46,6 +53,7 @@
 				{/each}
 			</nav>
 			<div class="flex items-center gap-2">
+				<UserModeButton onClick={() => (wizardOpen = true)} />
 				<MotionToggle />
 				<LocaleSwitcher />
 			</div>
@@ -54,3 +62,5 @@
 
 	{@render children()}
 </div>
+
+<UserModeWizard bind:open={wizardOpen} />
