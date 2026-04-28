@@ -116,6 +116,44 @@
 			bind:this={frameEl}
 			class="frame relative rounded-xl bg-white ring-1 ring-zinc-200 dark:bg-zinc-900 dark:ring-zinc-800"
 		>
+			{#if !collapsed}
+				<div class="scene-host border-b border-zinc-200 dark:border-zinc-800">
+					{#if loading && !molecule}
+						<div class="grid h-full place-items-center text-sm text-zinc-500" role="status">
+							{t('molecule.loading')}
+						</div>
+					{:else if molecule}
+						{#if mode === '3d' && canUse3D}
+							{#key molecule.canonicalSmiles}
+								<Molecule3D
+									atoms={molecule.atoms}
+									bonds={molecule.bonds}
+									bind:handle={moleculeHandle}
+								/>
+							{/key}
+						{:else}
+							<div class="grid h-full w-full place-items-center overflow-hidden p-4">
+								<div
+									class="molecule-svg transition-transform"
+									style:transform="scale({scale2D})"
+									style:transform-origin="center center"
+								>
+									<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+									{@html molecule.svg2D}
+								</div>
+							</div>
+						{/if}
+					{:else if error}
+						<div
+							class="grid h-full place-items-center px-4 text-sm text-red-600 dark:text-red-400"
+							role="alert"
+						>
+							{t('molecule.invalid')}
+						</div>
+					{/if}
+				</div>
+			{/if}
+
 			<div class="flex items-center justify-end gap-2 p-1.5">
 				{#if canUse3D && molecule}
 					<div
@@ -160,44 +198,6 @@
 					{canZoomOut}
 				/>
 			</div>
-
-			{#if !collapsed}
-				<div class="scene-host border-t border-zinc-200 dark:border-zinc-800">
-					{#if loading && !molecule}
-						<div class="grid h-full place-items-center text-sm text-zinc-500" role="status">
-							{t('molecule.loading')}
-						</div>
-					{:else if molecule}
-						{#if mode === '3d' && canUse3D}
-							{#key molecule.canonicalSmiles}
-								<Molecule3D
-									atoms={molecule.atoms}
-									bonds={molecule.bonds}
-									bind:handle={moleculeHandle}
-								/>
-							{/key}
-						{:else}
-							<div class="grid h-full w-full place-items-center overflow-hidden p-4">
-								<div
-									class="molecule-svg transition-transform"
-									style:transform="scale({scale2D})"
-									style:transform-origin="center center"
-								>
-									<!-- eslint-disable-next-line svelte/no-at-html-tags -->
-									{@html molecule.svg2D}
-								</div>
-							</div>
-						{/if}
-					{:else if error}
-						<div
-							class="grid h-full place-items-center px-4 text-sm text-red-600 dark:text-red-400"
-							role="alert"
-						>
-							{t('molecule.invalid')}
-						</div>
-					{/if}
-				</div>
-			{/if}
 		</div>
 
 		{#if molecule}

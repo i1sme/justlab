@@ -70,6 +70,28 @@
 	bind:this={frameEl}
 	class="frame relative rounded-2xl bg-zinc-100 ring-1 ring-zinc-200 dark:bg-zinc-800 dark:ring-zinc-700"
 >
+	{#if !collapsed}
+		<div class="scene-host border-b border-zinc-200 dark:border-zinc-700">
+			{#key element.number}
+				{#if mode === '3d' && canUse3D}
+					<AtomBohr3D {element} bind:handle={atomHandle} />
+				{:else}
+					<div
+						class="grid h-full w-full place-items-center overflow-hidden p-2 text-zinc-600 dark:text-zinc-300"
+					>
+						<div
+							class="h-full w-full transition-transform"
+							style:transform="scale({scale2D})"
+							style:transform-origin="center center"
+						>
+							<AtomBohr2D {element} />
+						</div>
+					</div>
+				{/if}
+			{/key}
+		</div>
+	{/if}
+
 	<div class="flex items-center justify-end gap-2 p-1.5">
 		{#if canUse3D}
 			<div
@@ -112,28 +134,6 @@
 			{canZoomOut}
 		/>
 	</div>
-
-	{#if !collapsed}
-		<div class="scene-host border-t border-zinc-200 dark:border-zinc-700">
-			{#key element.number}
-				{#if mode === '3d' && canUse3D}
-					<AtomBohr3D {element} bind:handle={atomHandle} />
-				{:else}
-					<div
-						class="grid h-full w-full place-items-center overflow-hidden p-2 text-zinc-600 dark:text-zinc-300"
-					>
-						<div
-							class="h-full w-full transition-transform"
-							style:transform="scale({scale2D})"
-							style:transform-origin="center center"
-						>
-							<AtomBohr2D {element} />
-						</div>
-					</div>
-				{/if}
-			{/key}
-		</div>
-	{/if}
 </div>
 
 <style>
