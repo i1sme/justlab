@@ -1,5 +1,5 @@
 <script lang="ts">
-	import PeriodicTable from '$lib/ui/PeriodicTable.svelte';
+	import PeriodicTable2D from '$lib/ui/PeriodicTable2D.svelte';
 	import ElementDetails from '$lib/ui/ElementDetails.svelte';
 	import ElementSearch from '$lib/ui/ElementSearch.svelte';
 	import CategoryLegend from '$lib/ui/CategoryLegend.svelte';
@@ -32,7 +32,7 @@
 
 	<div class="grid gap-6 lg:grid-cols-[1fr_320px]">
 		<div class="space-y-3">
-			<PeriodicTable onSelect={selectElement} selectedNumber={selected?.number ?? null} />
+			<PeriodicTable2D onSelect={selectElement} selectedNumber={selected?.number ?? null} />
 			<details class="group">
 				<summary
 					class="cursor-pointer text-xs text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"

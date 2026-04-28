@@ -1,29 +1,28 @@
 <script lang="ts">
 	import type { MoleculeAtom, MoleculeBond } from '$lib/chemistry/openchemlib';
+	import type { MoleculeSceneHandle } from '$lib/render3d/molecule-scene';
 	import { detectQuality } from '$lib/render3d/webgl-detect';
 	import { getMotionEnabled } from '$lib/settings';
-
-	type Handle = { setMotion(enabled: boolean): void; dispose(): void };
 
 	type Props = {
 		atoms: ReadonlyArray<MoleculeAtom>;
 		bonds: ReadonlyArray<MoleculeBond>;
+		/** Bindable: родитель получит handle сцены и сможет звать .zoom()/.setMotion(). */
+		handle?: MoleculeSceneHandle | null;
 	};
 
-	let { atoms, bonds }: Props = $props();
+	let { atoms, bonds, handle = $bindable<MoleculeSceneHandle | null>(null) }: Props = $props();
 
 	let canvasEl: HTMLCanvasElement | null = $state(null);
-	let handle: Handle | null = $state(null);
 	let loadError: string | null = $state(null);
 
 	$effect(() => {
 		if (!canvasEl) return;
 		const target = canvasEl;
-		// Захват props в момент монтирования: при изменении molecule компонент пере-маунтится через keyed parent.
 		const a = atoms;
 		const b = bonds;
 		let cancelled = false;
-		let local: Handle | null = null;
+		let local: MoleculeSceneHandle | null = null;
 		const quality = detectQuality();
 
 		(async () => {
@@ -54,9 +53,7 @@
 	});
 </script>
 
-<div
-	class="relative aspect-[3/2] w-full overflow-hidden rounded-xl bg-zinc-100 ring-1 ring-zinc-200 dark:bg-zinc-800 dark:ring-zinc-700"
->
+<div class="relative h-full w-full overflow-hidden">
 	<canvas bind:this={canvasEl} class="block h-full w-full"></canvas>
 	{#if loadError}
 		<div

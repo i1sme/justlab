@@ -17,6 +17,8 @@ export interface MountAtomSceneOptions {
 
 export interface AtomSceneHandle {
 	setMotion(enabled: boolean): void;
+	/** factor > 1 — приблизить, factor < 1 — отдалить. Учитывает min/max OrbitControls. */
+	zoom(factor: number): void;
 	dispose(): void;
 }
 
@@ -186,6 +188,14 @@ export function mountAtomScene(
 				controls.addEventListener('change', onControlsChange);
 				renderer.render(scene, camera);
 			}
+		},
+		zoom(factor) {
+			const dist = camera.position.distanceTo(controls.target);
+			const newDist = Math.max(controls.minDistance, Math.min(controls.maxDistance, dist / factor));
+			const dir = camera.position.clone().sub(controls.target).normalize();
+			camera.position.copy(controls.target).addScaledVector(dir, newDist);
+			controls.update();
+			if (!motionOn) renderer.render(scene, camera);
 		},
 		dispose() {
 			stopLoop();

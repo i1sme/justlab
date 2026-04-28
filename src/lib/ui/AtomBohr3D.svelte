@@ -1,25 +1,26 @@
 <script lang="ts">
 	import type { PeriodicElement } from '../../data/elements';
+	import type { AtomSceneHandle } from '$lib/render3d/atom-scene';
 	import { shellDistribution } from '$lib/chemistry/electron-config';
 	import { detectQuality } from '$lib/render3d/webgl-detect';
 	import { getMotionEnabled } from '$lib/settings';
 
-	type Handle = { setMotion(enabled: boolean): void; dispose(): void };
-
-	type Props = { element: PeriodicElement };
-	let { element }: Props = $props();
+	type Props = {
+		element: PeriodicElement;
+		/** Bindable: родитель получает handle сцены для zoom/motion. */
+		handle?: AtomSceneHandle | null;
+	};
+	let { element, handle = $bindable<AtomSceneHandle | null>(null) }: Props = $props();
 
 	let canvasEl: HTMLCanvasElement | null = $state(null);
-	let handle: Handle | null = $state(null);
 	let loadError: string | null = $state(null);
 
 	$effect(() => {
 		if (!canvasEl) return;
 		const target = canvasEl;
-		// фиксируем элемент на момент монтирования; смена `element` приведёт к remount через ключ
 		const el = element;
 		let cancelled = false;
-		let local: Handle | null = null;
+		let local: AtomSceneHandle | null = null;
 		const quality = detectQuality();
 
 		(async () => {
@@ -51,9 +52,7 @@
 	});
 </script>
 
-<div
-	class="relative aspect-square w-full overflow-hidden rounded-xl bg-zinc-100 ring-1 ring-zinc-200 dark:bg-zinc-800 dark:ring-zinc-700"
->
+<div class="relative h-full w-full overflow-hidden">
 	<canvas bind:this={canvasEl} class="block h-full w-full"></canvas>
 	{#if loadError}
 		<div

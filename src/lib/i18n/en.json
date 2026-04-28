@@ -4,7 +4,15 @@
 		"tagline": "Virtual chemistry lab"
 	},
 	"home": {
-		"intro": "Click or tap an element — its card appears on the side. 3D view is available on WebGL2 devices; otherwise the 2D fallback is used automatically."
+		"intro": "Click or tap an element — its card with the 3D/2D atom structure and properties appears on the side."
+	},
+	"viewer": {
+		"zoomIn": "Zoom in",
+		"zoomOut": "Zoom out",
+		"fullscreen": "Fullscreen",
+		"exitFullscreen": "Exit fullscreen",
+		"collapse": "Collapse",
+		"expand": "Expand"
 	},
 	"periodicTable": {
 		"title": "Periodic table",
