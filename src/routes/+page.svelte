@@ -11,7 +11,21 @@
 	function selectElement(el: PeriodicElement): void {
 		selected = el;
 	}
+
+	// ESC снимает выбор. Игнорируем событие, если фокус в поле ввода — пусть Esc
+	// очищает поиск, а не убирает выделение в таблице.
+	function onKeydown(e: KeyboardEvent): void {
+		if (e.key !== 'Escape') return;
+		const tag = (e.target as HTMLElement | null)?.tagName;
+		if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+		if (selected !== null) {
+			selected = null;
+			e.preventDefault();
+		}
+	}
 </script>
+
+<svelte:window onkeydown={onKeydown} />
 
 <svelte:head>
 	<title>{t('app.title')} — {t('periodicTable.title')}</title>

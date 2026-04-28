@@ -151,6 +151,42 @@ export const GLOSSARY: readonly GlossaryTerm[] = [
 		}
 	},
 	{
+		key: 'atomic-mass',
+		category: 'atom',
+		term: { ru: 'Атомная масса', en: 'Atomic mass' },
+		definition: {
+			ru: 'Средняя масса атома элемента, выраженная в атомных единицах массы (а.е.м.). Учитывает соотношение природных изотопов.',
+			en: 'Average mass of an atom in atomic mass units (u). Weighted by natural isotope abundances.'
+		}
+	},
+	{
+		key: 'period',
+		category: 'atom',
+		term: { ru: 'Период', en: 'Period' },
+		definition: {
+			ru: 'Горизонтальная строка в таблице Менделеева. Номер периода = главное квантовое число внешней оболочки.',
+			en: 'A horizontal row in the periodic table. The period number equals the principal quantum number of the outer shell.'
+		}
+	},
+	{
+		key: 'group',
+		category: 'atom',
+		term: { ru: 'Группа', en: 'Group' },
+		definition: {
+			ru: 'Вертикальный столбец в таблице. Элементы одной группы имеют схожие химические свойства из-за одинаковой структуры внешней оболочки.',
+			en: 'A vertical column in the table. Elements in the same group share similar chemical properties due to the same outer-shell structure.'
+		}
+	},
+	{
+		key: 'block',
+		category: 'atom',
+		term: { ru: 'Блок (s/p/d/f)', en: 'Block (s/p/d/f)' },
+		definition: {
+			ru: 'Группировка элементов по подоболочке, заполняемой последней. s-блок — щелочные/щёлочноземельные, p-блок — неметаллы и постпереходные, d-блок — переходные, f-блок — лантаноиды и актиноиды.',
+			en: 'A grouping of elements by the subshell filled last. s-block — alkali/alkaline-earth, p-block — nonmetals and post-transition, d-block — transition metals, f-block — lanthanoids and actinoids.'
+		}
+	},
+	{
 		key: 'ion',
 		category: 'atom',
 		term: { ru: 'Ион', en: 'Ion' },

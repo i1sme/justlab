@@ -37,8 +37,15 @@ export default defineConfig(
 		}
 	},
 	{
-		// Override or add rule settings here, such as:
-		// 'svelte/button-has-type': 'error'
+		// TermLink строит href динамически (`resolve('/glossary') + '#term-' + key`),
+		// и плагин не распознаёт через статический анализ присутствие resolve().
+		// Внутри файла мы уже используем resolve явно — отключаем правило точечно.
+		files: ['src/lib/ui/TermLink.svelte'],
+		rules: {
+			'svelte/no-navigation-without-resolve': 'off'
+		}
+	},
+	{
 		rules: {}
 	}
 );

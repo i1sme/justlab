@@ -5,6 +5,7 @@
 	import AtomBohr3D from './AtomBohr3D.svelte';
 	import ViewerControls from './ViewerControls.svelte';
 	import { supportsWebGL2 } from '$lib/render3d/webgl-detect';
+	import { getMotionEnabled } from '$lib/settings';
 	import { t } from '$lib/i18n';
 
 	type Mode = '3d' | '2d';
@@ -64,33 +65,41 @@
 	$effect(() => {
 		if (element.number) scale2D = 1;
 	});
+
+	// Управляем motion 3D-сцены централизованно: пауза, когда 3D невидим
+	// (mode 2D, collapsed) — экономим CPU. Когда виден — следуем глобальной настройке.
+	$effect(() => {
+		if (!atomHandle) return;
+		const active3D = mode === '3d' && canUse3D && !collapsed;
+		atomHandle.setMotion(active3D && getMotionEnabled());
+	});
 </script>
 
 <div
 	bind:this={frameEl}
 	class="frame relative rounded-2xl bg-zinc-100 ring-1 ring-zinc-200 dark:bg-zinc-800 dark:ring-zinc-700"
 >
-	{#if !collapsed}
-		<div class="scene-host border-b border-zinc-200 dark:border-zinc-700">
-			{#key element.number}
-				{#if mode === '3d' && canUse3D}
-					<AtomBohr3D {element} bind:handle={atomHandle} />
-				{:else}
-					<div
-						class="grid h-full w-full place-items-center overflow-hidden p-2 text-zinc-600 dark:text-zinc-300"
-					>
-						<div
-							class="h-full w-full transition-transform"
-							style:transform="scale({scale2D})"
-							style:transform-origin="center center"
-						>
-							<AtomBohr2D {element} />
-						</div>
-					</div>
-				{/if}
-			{/key}
-		</div>
-	{/if}
+	<!-- Обе сцены живут одновременно — переключение режима не уничтожает 3D-сцену
+	     (зум/поворот сохраняются), а 2D-зум остаётся в scale2D. -->
+	<div class="scene-host border-b border-zinc-200 dark:border-zinc-700" class:hidden={collapsed}>
+		{#key element.number}
+			<div class="h-full w-full" class:hidden={!(mode === '3d' && canUse3D)}>
+				<AtomBohr3D {element} bind:handle={atomHandle} />
+			</div>
+			<div
+				class="grid h-full w-full place-items-center overflow-hidden p-2 text-zinc-600 dark:text-zinc-300"
+				class:hidden={mode === '3d' && canUse3D}
+			>
+				<div
+					class="h-full w-full transition-transform"
+					style:transform="scale({scale2D})"
+					style:transform-origin="center center"
+				>
+					<AtomBohr2D {element} />
+				</div>
+			</div>
+		{/key}
+	</div>
 
 	<div class="flex items-center justify-end gap-2 p-1.5">
 		{#if canUse3D}

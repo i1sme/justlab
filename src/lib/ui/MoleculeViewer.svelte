@@ -2,10 +2,12 @@
 	import { parseSmiles, type ParsedMolecule } from '$lib/chemistry/openchemlib';
 	import type { MoleculeSceneHandle } from '$lib/render3d/molecule-scene';
 	import { supportsWebGL2 } from '$lib/render3d/webgl-detect';
+	import { getMotionEnabled } from '$lib/settings';
 	import { t } from '$lib/i18n';
 	import Molecule3D from './Molecule3D.svelte';
 	import MoleculeLibrary from './MoleculeLibrary.svelte';
 	import ViewerControls from './ViewerControls.svelte';
+	import TermLink from './TermLink.svelte';
 
 	type Mode = '3d' | '2d';
 
@@ -107,6 +109,13 @@
 		document.addEventListener('fullscreenchange', onFullscreenChange);
 		return () => document.removeEventListener('fullscreenchange', onFullscreenChange);
 	});
+
+	// Централизованное управление motion: пауза 3D-сцены, когда она невидима.
+	$effect(() => {
+		if (!moleculeHandle) return;
+		const active3D = mode === '3d' && canUse3D && !collapsed;
+		moleculeHandle.setMotion(active3D && getMotionEnabled());
+	});
 </script>
 
 <section class="grid gap-4 lg:grid-cols-[1fr_360px]" aria-labelledby="molecule-viewer-title">
@@ -116,43 +125,48 @@
 			bind:this={frameEl}
 			class="frame relative rounded-xl bg-white ring-1 ring-zinc-200 dark:bg-zinc-900 dark:ring-zinc-800"
 		>
-			{#if !collapsed}
-				<div class="scene-host border-b border-zinc-200 dark:border-zinc-800">
-					{#if loading && !molecule}
-						<div class="grid h-full place-items-center text-sm text-zinc-500" role="status">
-							{t('molecule.loading')}
+			<!-- Обе сцены живут одновременно, переключение режима не уничтожает 3D-state.
+			     {#key} ремаунтит при смене молекулы (новые atoms/bonds — новая сцена). -->
+			<div
+				class="scene-host border-b border-zinc-200 dark:border-zinc-800"
+				class:hidden={collapsed}
+			>
+				{#if loading && !molecule}
+					<div class="grid h-full place-items-center text-sm text-zinc-500" role="status">
+						{t('molecule.loading')}
+					</div>
+				{:else if molecule}
+					{#key molecule.canonicalSmiles}
+						<div class="h-full w-full" class:hidden={!(mode === '3d' && canUse3D)}>
+							<Molecule3D
+								atoms={molecule.atoms}
+								bonds={molecule.bonds}
+								bind:handle={moleculeHandle}
+							/>
 						</div>
-					{:else if molecule}
-						{#if mode === '3d' && canUse3D}
-							{#key molecule.canonicalSmiles}
-								<Molecule3D
-									atoms={molecule.atoms}
-									bonds={molecule.bonds}
-									bind:handle={moleculeHandle}
-								/>
-							{/key}
-						{:else}
-							<div class="grid h-full w-full place-items-center overflow-hidden p-4">
-								<div
-									class="molecule-svg transition-transform"
-									style:transform="scale({scale2D})"
-									style:transform-origin="center center"
-								>
-									<!-- eslint-disable-next-line svelte/no-at-html-tags -->
-									{@html molecule.svg2D}
-								</div>
-							</div>
-						{/if}
-					{:else if error}
 						<div
-							class="grid h-full place-items-center px-4 text-sm text-red-600 dark:text-red-400"
-							role="alert"
+							class="grid h-full w-full place-items-center overflow-hidden p-4"
+							class:hidden={mode === '3d' && canUse3D}
 						>
-							{t('molecule.invalid')}
+							<div
+								class="molecule-svg transition-transform"
+								style:transform="scale({scale2D})"
+								style:transform-origin="center center"
+							>
+								<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+								{@html molecule.svg2D}
+							</div>
 						</div>
-					{/if}
-				</div>
-			{/if}
+					{/key}
+				{:else if error}
+					<div
+						class="grid h-full place-items-center px-4 text-sm text-red-600 dark:text-red-400"
+						role="alert"
+					>
+						{t('molecule.invalid')}
+					</div>
+				{/if}
+			</div>
 
 			<div class="flex items-center justify-end gap-2 p-1.5">
 				{#if canUse3D && molecule}
@@ -202,9 +216,13 @@
 
 		{#if molecule}
 			<dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-sm">
-				<dt class="text-zinc-600 dark:text-zinc-400">{t('molecule.formula')}</dt>
+				<dt class="text-zinc-600 dark:text-zinc-400">
+					<TermLink termKey="compound">{t('molecule.formula')}</TermLink>
+				</dt>
 				<dd class="font-mono">{molecule.formula}</dd>
-				<dt class="text-zinc-600 dark:text-zinc-400">{t('molecule.weight')}</dt>
+				<dt class="text-zinc-600 dark:text-zinc-400">
+					<TermLink termKey="molar-mass">{t('molecule.weight')}</TermLink>
+				</dt>
 				<dd class="font-mono">{molecule.relativeWeight.toFixed(2)}</dd>
 				<dt class="text-zinc-600 dark:text-zinc-400">SMILES</dt>
 				<dd class="truncate font-mono">{molecule.canonicalSmiles}</dd>

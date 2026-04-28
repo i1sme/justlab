@@ -2,6 +2,7 @@
 	import type { PeriodicElement } from '../../data/elements';
 	import { getLocale, t } from '$lib/i18n';
 	import AtomViewer from './AtomViewer.svelte';
+	import TermLink from './TermLink.svelte';
 
 	type Props = { element: PeriodicElement | null };
 	let { element }: Props = $props();
@@ -24,19 +25,29 @@
 		</div>
 
 		<dl class="mt-5 grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
-			<dt class="text-zinc-600 dark:text-zinc-400">{t('element.number')}</dt>
+			<dt class="text-zinc-600 dark:text-zinc-400">
+				<TermLink termKey="atomic-number">{t('element.number')}</TermLink>
+			</dt>
 			<dd class="font-medium">{element.number}</dd>
 
-			<dt class="text-zinc-600 dark:text-zinc-400">{t('element.mass')}</dt>
+			<dt class="text-zinc-600 dark:text-zinc-400">
+				<TermLink termKey="atomic-mass">{t('element.mass')}</TermLink>
+			</dt>
 			<dd class="font-medium">{element.atomicMass.toFixed(3)}</dd>
 
-			<dt class="text-zinc-600 dark:text-zinc-400">{t('element.period')}</dt>
+			<dt class="text-zinc-600 dark:text-zinc-400">
+				<TermLink termKey="period">{t('element.period')}</TermLink>
+			</dt>
 			<dd class="font-medium">{element.period}</dd>
 
-			<dt class="text-zinc-600 dark:text-zinc-400">{t('element.group')}</dt>
+			<dt class="text-zinc-600 dark:text-zinc-400">
+				<TermLink termKey="group">{t('element.group')}</TermLink>
+			</dt>
 			<dd class="font-medium">{element.group ?? '—'}</dd>
 
-			<dt class="text-zinc-600 dark:text-zinc-400">{t('element.block')}</dt>
+			<dt class="text-zinc-600 dark:text-zinc-400">
+				<TermLink termKey="block">{t('element.block')}</TermLink>
+			</dt>
 			<dd class="font-medium uppercase">{element.block}</dd>
 		</dl>
 	</article>

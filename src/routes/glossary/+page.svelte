@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import {
 		GLOSSARY,
 		GLOSSARY_CATEGORIES,
@@ -8,6 +9,18 @@
 	import { getLocale, t } from '$lib/i18n';
 
 	let query = $state('');
+
+	// Прокручиваем к якорю и подсвечиваем целевую карточку при заходе по ссылке /glossary#term-key.
+	// Делаем после mount + tick — содержимое уже отрендерено к этому моменту.
+	onMount(() => {
+		const hash = window.location.hash.slice(1);
+		if (!hash) return;
+		const el = document.getElementById(`term-${hash}`);
+		if (el) {
+			// Небольшой timeout — чтобы layout успел стабилизироваться.
+			setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'center' }), 60);
+		}
+	});
 
 	const filtered = $derived.by(() => {
 		const q = query.trim().toLowerCase();
@@ -61,7 +74,8 @@
 					<dl class="space-y-3">
 						{#each group.items as term (term.key)}
 							<div
-								class="rounded-xl bg-white p-4 ring-1 ring-zinc-200 dark:bg-zinc-900 dark:ring-zinc-800"
+								id={`term-${term.key}`}
+								class="term-card scroll-mt-24 rounded-xl bg-white p-4 ring-1 ring-zinc-200 dark:bg-zinc-900 dark:ring-zinc-800"
 							>
 								<dt class="font-semibold">{term.term[getLocale()]}</dt>
 								<dd class="mt-1 text-sm text-zinc-700 dark:text-zinc-300">
@@ -75,3 +89,25 @@
 		</div>
 	{/if}
 </main>
+
+<style>
+	/* Подсветка карточки при переходе по якорю — затухает за ~2 секунды. */
+	.term-card:target {
+		animation: highlight-target 2s ease-out;
+	}
+	@keyframes highlight-target {
+		0% {
+			box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.5);
+		}
+		100% {
+			box-shadow: 0 0 0 0 rgba(37, 99, 235, 0);
+		}
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.term-card:target {
+			animation: none;
+			outline: 2px solid #2563eb;
+			outline-offset: 4px;
+		}
+	}
+</style>

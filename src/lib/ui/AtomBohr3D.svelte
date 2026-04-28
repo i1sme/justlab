@@ -10,6 +10,7 @@
 		/** Bindable: родитель получает handle сцены для zoom/motion. */
 		handle?: AtomSceneHandle | null;
 	};
+	// eslint-disable-next-line no-useless-assignment -- $bindable начальный fallback
 	let { element, handle = $bindable<AtomSceneHandle | null>(null) }: Props = $props();
 
 	let canvasEl: HTMLCanvasElement | null = $state(null);
@@ -47,9 +48,8 @@
 		};
 	});
 
-	$effect(() => {
-		handle?.setMotion(getMotionEnabled());
-	});
+	// NB: auto-sync setMotion вынесен в родителя (AtomViewer), чтобы учитывать видимость
+	// сцены (когда 3D скрыт за 2D-режимом или collapsed — петлю кадров нужно остановить).
 </script>
 
 <div class="relative h-full w-full overflow-hidden">

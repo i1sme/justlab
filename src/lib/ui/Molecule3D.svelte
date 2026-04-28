@@ -11,6 +11,7 @@
 		handle?: MoleculeSceneHandle | null;
 	};
 
+	// eslint-disable-next-line no-useless-assignment -- $bindable начальный fallback
 	let { atoms, bonds, handle = $bindable<MoleculeSceneHandle | null>(null) }: Props = $props();
 
 	let canvasEl: HTMLCanvasElement | null = $state(null);
@@ -48,9 +49,7 @@
 		};
 	});
 
-	$effect(() => {
-		handle?.setMotion(getMotionEnabled());
-	});
+	// auto-sync motion вынесен в родителя (MoleculeViewer) — он знает про mode/collapsed.
 </script>
 
 <div class="relative h-full w-full overflow-hidden">
