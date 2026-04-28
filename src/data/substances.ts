@@ -6,6 +6,7 @@
 
 import { ELEMENTS, type PeriodicElement } from './elements';
 import { MOLECULES, type CuratedMolecule } from './molecules';
+import { INORGANIC_SUBSTANCES } from './inorganic-substances';
 import { cpkColor } from '../lib/chemistry/cpk-colors';
 import type { Substance, Phase, Difficulty } from './types';
 
@@ -164,8 +165,17 @@ const moleculeSubstances: readonly Substance[] = MOLECULES.map(moleculeToSubstan
 /**
  * Все вещества в системе. Iterable, но для частых поисков использовать SUBSTANCE_BY_ID.
  * Источник правды для лабораторного inventory + reaction-engine.
+ *
+ * Состав:
+ *   - 118 элементов (через elementToSubstance)
+ *   - 30 органических/aromatic/biology молекул из MoleculeLibrary (через moleculeToSubstance)
+ *   - ~22 курируемых неорганических соединения (соли, гидроксиды, оксиды, газы)
  */
-export const SUBSTANCES: readonly Substance[] = [...elementSubstances, ...moleculeSubstances];
+export const SUBSTANCES: readonly Substance[] = [
+	...elementSubstances,
+	...moleculeSubstances,
+	...INORGANIC_SUBSTANCES
+];
 
 /** O(1) lookup по ID. */
 export const SUBSTANCE_BY_ID: ReadonlyMap<string, Substance> = new Map(

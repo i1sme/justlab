@@ -7,3 +7,4 @@ export * from './molecules';
 export * from './glossary';
 export * from './types';
 export * from './substances';
+export * from './inorganic-substances';

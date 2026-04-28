@@ -5,6 +5,7 @@
 import { describe, expect, it } from 'vitest';
 import { ELEMENTS } from './elements';
 import { MOLECULES } from './molecules';
+import { INORGANIC_SUBSTANCES } from './inorganic-substances';
 import {
 	SUBSTANCES,
 	SUBSTANCE_BY_ID,
@@ -123,16 +124,18 @@ describe('moleculeToSubstance', () => {
 });
 
 describe('SUBSTANCES реестр', () => {
-	it('содержит все элементы и молекулы', () => {
-		expect(SUBSTANCES.length).toBe(ELEMENTS.length + MOLECULES.length);
+	it('содержит все элементы, молекулы и неорганические соединения', () => {
+		expect(SUBSTANCES.length).toBe(
+			ELEMENTS.length + MOLECULES.length + INORGANIC_SUBSTANCES.length
+		);
 	});
 
-	it('никаких дубликатов ID', () => {
+	it('никаких дубликатов ID между всеми источниками', () => {
 		const ids = new Set(SUBSTANCES.map((s) => s.id));
-		expect(ids.size, 'дубликат ID между элементами и молекулами').toBe(SUBSTANCES.length);
+		expect(ids.size, 'дубликат ID между источниками').toBe(SUBSTANCES.length);
 	});
 
-	it('SUBSTANCE_BY_ID находит элементы и молекулы', () => {
+	it('SUBSTANCE_BY_ID находит элементы, молекулы и неорганические соединения', () => {
 		const fe = findSubstance('Fe');
 		expect(fe?.kind).toBe('element');
 		expect(fe?.atomicNumber).toBe(26);
@@ -140,6 +143,13 @@ describe('SUBSTANCES реестр', () => {
 		const water = findSubstance('water');
 		expect(water?.kind).toBe('molecule');
 		expect(water?.smiles).toBe('O');
+
+		const naoh = findSubstance('sodium-hydroxide');
+		expect(naoh?.formula).toBe('NaOH');
+		expect(naoh?.glossaryRefs).toContain('base');
+
+		const o2 = findSubstance('oxygen-gas');
+		expect(o2?.defaultPhase).toBe('gas');
 	});
 
 	it('findSubstance возвращает undefined для неизвестных ID', () => {
@@ -148,5 +158,15 @@ describe('SUBSTANCES реестр', () => {
 
 	it('SUBSTANCE_BY_ID размер совпадает с длиной массива', () => {
 		expect(SUBSTANCE_BY_ID.size).toBe(SUBSTANCES.length);
+	});
+
+	it('у всех неорганических соединений есть ID, formula и difficulty', () => {
+		for (const s of INORGANIC_SUBSTANCES) {
+			expect(s.id, `id для ${s.formula}`).toMatch(/^[a-z0-9-]+$/);
+			expect(s.formula).toBeTruthy();
+			expect(s.names.ru).toBeTruthy();
+			expect(s.names.en).toBeTruthy();
+			expect(['beginner', 'school', 'university']).toContain(s.difficulty);
+		}
 	});
 });

@@ -3,3 +3,4 @@
 // RDKit (~10 MB WASM) грузится только через динамический import().
 
 export * from './cpk-colors';
+export * from './reaction-engine';
