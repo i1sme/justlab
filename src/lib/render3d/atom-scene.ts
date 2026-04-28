@@ -19,6 +19,8 @@ export interface AtomSceneHandle {
 	setMotion(enabled: boolean): void;
 	/** factor > 1 — приблизить, factor < 1 — отдалить. Учитывает min/max OrbitControls. */
 	zoom(factor: number): void;
+	/** Вернуть камеру и поворот атома в исходное состояние. */
+	reset(): void;
 	dispose(): void;
 }
 
@@ -122,7 +124,8 @@ export function mountAtomScene(
 	bbox.getSize(size);
 	const radius = Math.max(size.x, size.y, size.z) * 0.5 + 0.3;
 	const camDist = radius / Math.tan((camera.fov * Math.PI) / 360) + 1.5;
-	camera.position.set(0, 0, camDist);
+	const initialCameraPos = new THREE.Vector3(0, 0, camDist);
+	camera.position.copy(initialCameraPos);
 	camera.lookAt(0, 0, 0);
 
 	const controls = new OrbitControls(camera, canvas);
@@ -132,6 +135,16 @@ export function mountAtomScene(
 	controls.autoRotateSpeed = 0.7;
 	controls.enableDamping = motionOn;
 	controls.autoRotate = motionOn;
+
+	// Двойной клик / тап по canvas — сброс камеры и поворота атома.
+	function onDoubleClick(): void {
+		camera.position.copy(initialCameraPos);
+		controls.target.set(0, 0, 0);
+		atom.rotation.set(0, 0, 0);
+		controls.update();
+		if (!motionOn) renderer.render(scene, camera);
+	}
+	canvas.addEventListener('dblclick', onDoubleClick);
 
 	function resize(): void {
 		const w = canvas.clientWidth || 1;
@@ -146,11 +159,20 @@ export function mountAtomScene(
 	resize();
 
 	let frameId: number | null = null;
+	const clock = new THREE.Clock();
+	// Угловая скорость орбиты электронов (рад/с) — внутренние оболочки быстрее.
+	const ringSpeeds = ringMeshes.map((_, i) => 0.85 - i * 0.1);
+
 	function onControlsChange(): void {
 		renderer.render(scene, camera);
 	}
 	function frame(): void {
 		frameId = requestAnimationFrame(frame);
+		const dt = clock.getDelta();
+		// Вращаем каждое кольцо вокруг его собственной нормали — электроны «летят» по орбите.
+		for (let i = 0; i < ringMeshes.length; i++) {
+			ringMeshes[i].rotateZ(ringSpeeds[i] * dt);
+		}
 		controls.update();
 		renderer.render(scene, camera);
 	}
@@ -197,8 +219,10 @@ export function mountAtomScene(
 			controls.update();
 			if (!motionOn) renderer.render(scene, camera);
 		},
+		reset: onDoubleClick,
 		dispose() {
 			stopLoop();
+			canvas.removeEventListener('dblclick', onDoubleClick);
 			controls.removeEventListener('change', onControlsChange);
 			ro.disconnect();
 			controls.dispose();

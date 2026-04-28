@@ -54,7 +54,7 @@
 </script>
 
 <div class="relative h-full w-full overflow-hidden">
-	<canvas bind:this={canvasEl} class="block h-full w-full"></canvas>
+	<canvas bind:this={canvasEl} class="block h-full w-full touch-none"></canvas>
 	{#if loadError}
 		<div
 			class="absolute inset-0 flex items-center justify-center bg-zinc-100/95 p-4 text-center text-sm text-red-600 dark:bg-zinc-800/95"

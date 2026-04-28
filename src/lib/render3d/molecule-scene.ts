@@ -22,6 +22,8 @@ export interface MoleculeSceneHandle {
 	setMotion(enabled: boolean): void;
 	/** factor > 1 — приблизить, factor < 1 — отдалить. Учитывает min/max OrbitControls. */
 	zoom(factor: number): void;
+	/** Вернуть камеру к стартовой позиции (после пользовательских вращений/зумов). */
+	reset(): void;
 	dispose(): void;
 }
 
@@ -166,7 +168,8 @@ export function mountMoleculeScene(
 
 	const radius = Math.max(size.x, size.y, size.z, 1) * 0.6 + ATOM_RADIUS * 2;
 	const camDist = radius / Math.tan((camera.fov * Math.PI) / 360) + 2;
-	camera.position.set(0, 0, camDist);
+	const initialCameraPos = new THREE.Vector3(0, 0, camDist);
+	camera.position.copy(initialCameraPos);
 	camera.lookAt(0, 0, 0);
 
 	// ---- OrbitControls ----
@@ -176,6 +179,15 @@ export function mountMoleculeScene(
 	controls.minDistance = camDist * 0.4;
 	controls.maxDistance = camDist * 3;
 	controls.enableDamping = motionOn;
+
+	function resetCamera(): void {
+		camera.position.copy(initialCameraPos);
+		controls.target.set(0, 0, 0);
+		moleculeGroup.rotation.set(0, 0, 0);
+		controls.update();
+		if (!motionOn) renderer.render(scene, camera);
+	}
+	canvas.addEventListener('dblclick', resetCamera);
 
 	// ---- Resize ----
 	function resize(): void {
@@ -243,8 +255,10 @@ export function mountMoleculeScene(
 			controls.update();
 			if (!motionOn) renderNow();
 		},
+		reset: resetCamera,
 		dispose() {
 			stopLoop();
+			canvas.removeEventListener('dblclick', resetCamera);
 			controls.removeEventListener('change', onControlsChange);
 			ro.disconnect();
 			controls.dispose();

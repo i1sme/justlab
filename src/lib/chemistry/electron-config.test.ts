@@ -52,4 +52,43 @@ describe('shellDistribution', () => {
 			).toBe(z);
 		}
 	});
+
+	// === Аномалии Aufbau ===
+	it('хром (Z=24): один 4s проваливается в 3d', () => {
+		// Aufbau дал бы [2,8,12,2]; реально 3d⁵ 4s¹
+		expect(shellDistribution(24)).toEqual([2, 8, 13, 1]);
+	});
+
+	it('медь (Z=29): полностью заполненный 3d', () => {
+		expect(shellDistribution(29)).toEqual([2, 8, 18, 1]);
+	});
+
+	it('палладий (Z=46): оба 5s проваливаются в 4d', () => {
+		expect(shellDistribution(46)).toEqual([2, 8, 18, 18, 0]);
+	});
+
+	it('серебро (Z=47): 4d¹⁰ 5s¹', () => {
+		expect(shellDistribution(47)).toEqual([2, 8, 18, 18, 1]);
+	});
+
+	it('золото (Z=79): 5d¹⁰ 6s¹', () => {
+		expect(shellDistribution(79)).toEqual([2, 8, 18, 32, 18, 1]);
+	});
+
+	it('лантан (Z=57): 5d¹ а не 4f¹', () => {
+		expect(shellDistribution(57)).toEqual([2, 8, 18, 18, 9, 2]);
+	});
+
+	it('уран (Z=92): 5f³ 6d¹ 7s²', () => {
+		expect(shellDistribution(92)).toEqual([2, 8, 18, 32, 21, 9, 2]);
+	});
+
+	it('сумма для аномалий тоже равна Z', () => {
+		for (const z of [24, 29, 46, 47, 78, 79, 57, 64, 89, 92, 96, 103]) {
+			expect(
+				shellDistribution(z).reduce((a, b) => a + b, 0),
+				`Z=${z}`
+			).toBe(z);
+		}
+	});
 });
