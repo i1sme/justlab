@@ -5,3 +5,5 @@ export * from './elements';
 export * from './category-colors';
 export * from './molecules';
 export * from './glossary';
+export * from './types';
+export * from './substances';

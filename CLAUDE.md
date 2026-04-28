@@ -48,8 +48,22 @@ UX поддерживает **два уровня сложности** (школ
 - **LOD обязателен** для всего, что может появиться в количестве > 50 на сцене.
 - **Adaptive quality**: при старте детектится GPU (через `navigator.gpu` / `WEBGL_debug_renderer_info`), выставляется preset. Пресеты: `low` (2D-only или 3D с минимумом), `medium`, `high`.
 - **Lazy load всего тяжёлого**: RDKit (~10 MB WASM), Three.js, Rapier — только динамические `import()` по необходимости.
-- **`prefers-reduced-motion` уважается всегда** — анимации заменяются на мгновенные переходы.
+- **`prefers-reduced-motion` уважается всегда** — анимации заменяются на мгновенные переходы. Дополнительно есть глобальный `motionEnabled` toggle в settings.
 - **i18n с нулевого дня.** Никаких хардкодных строк в UI. Минимум: `ru`, `en`.
+
+## Lab архитектура (фаза 0+)
+
+Эти правила фиксируются ДО начала работы над лабораторией, чтобы избежать архитектурного долга.
+
+- **Доменные типы — единый источник правды**: `src/data/types.ts` (`Substance`, `Reaction`, `Experiment`, `Action`). Любой код, работающий с веществами/реакциями, использует эти типы. Существующие `PeriodicElement`/`CuratedMolecule` оборачиваются адаптерами в `src/data/substances.ts` — не переписываются.
+- **Reaction DB — chunked per category**: файлы вида `src/data/reactions/{category}.ts` грузятся динамически. Никакого «один файл с 500 реакциями».
+- **Reaction-engine честен**: если реакция не найдена в БД — возвращаем `null` и UI показывает «реакция неизвестна». Никогда не выдумываем продукты.
+- **Анимации реакций — keyframe-based** (`Reaction.timeline: ReactionFrame[]`), не imperative. Это база для «Машины времени» (перемотка реакции).
+- **3D lab scene — отдельный модуль** `src/lib/render3d/lab-scene.ts`, не смешивается с molecule-scene или atom-scene. Каждая сцена — изолированный factory с handle (как уже сделано для остальных).
+- **Lab-state event-sourcing**: `Action[]` — журнал, `LabState` пере-вычисляется reducer'ом. Это даёт undo, шеринг через URL, машину времени.
+- **Experiment в URL и IndexedDB**: lz-string-сжатый JSON в hash для шеринга, плюс Dexie-журнал. Schema-version обязателен для будущих миграций.
+- **`userMode` (Новичок/Школа/Вуз) — глобальный $state**, persist в IndexedDB (НЕ в URL — иначе шеринг ссылок ломает чужой режим).
+- **Difficulty гейтинг**: каждый Substance/Reaction имеет `difficulty: 'beginner' | 'school' | 'university'`. Контент фильтруется по `userMode`.
 
 ## Структура
 
