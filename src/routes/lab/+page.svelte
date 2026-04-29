@@ -3,6 +3,7 @@
 	import Inventory from '$lib/ui/Inventory.svelte';
 	import ReactionInfo from '$lib/ui/ReactionInfo.svelte';
 	import QuestPanel from '$lib/ui/QuestPanel.svelte';
+	import VisualLabView from '$lib/ui/VisualLabView.svelte';
 	import { t } from '$lib/i18n';
 	import {
 		getExperiment,
@@ -10,12 +11,18 @@
 		setSelectedContainerId,
 		resetExperiment
 	} from '$lib/lab';
+	import { getLabView, setLabView, type LabView } from '$lib/settings';
 
 	const experiment = $derived(getExperiment());
 	const selectedId = $derived(getSelectedContainerId());
+	const view = $derived(getLabView());
 
 	function toggleSelect(id: string): void {
 		setSelectedContainerId(selectedId === id ? null : id);
+	}
+
+	function chooseView(v: LabView): void {
+		setLabView(v);
 	}
 </script>
 
@@ -29,13 +36,44 @@
 			<h1 class="text-3xl font-bold tracking-tight">{t('lab.title')}</h1>
 			<p class="mt-1 max-w-2xl text-sm text-zinc-700 dark:text-zinc-300">{t('lab.intro')}</p>
 		</div>
-		<button
-			type="button"
-			class="rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
-			onclick={() => resetExperiment()}
-		>
-			{t('lab.reset')}
-		</button>
+		<div class="flex flex-shrink-0 items-center gap-2">
+			<!-- Toggle между формальной и визуальной лабораторией. -->
+			<div
+				class="inline-flex rounded-lg border border-zinc-300 bg-white p-0.5 dark:border-zinc-700 dark:bg-zinc-900"
+				role="radiogroup"
+				aria-label={t('lab.view.label')}
+			>
+				<button
+					type="button"
+					class="view-btn"
+					class:view-btn--active={view === 'formal'}
+					role="radio"
+					aria-checked={view === 'formal'}
+					onclick={() => chooseView('formal')}
+					title={t('lab.view.formal')}
+				>
+					📊 {t('lab.view.formal')}
+				</button>
+				<button
+					type="button"
+					class="view-btn"
+					class:view-btn--active={view === 'visual'}
+					role="radio"
+					aria-checked={view === 'visual'}
+					onclick={() => chooseView('visual')}
+					title={t('lab.view.visual')}
+				>
+					🧪 {t('lab.view.visual')}
+				</button>
+			</div>
+			<button
+				type="button"
+				class="rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+				onclick={() => resetExperiment()}
+			>
+				{t('lab.reset')}
+			</button>
+		</div>
 	</header>
 
 	<div class="grid gap-6 lg:grid-cols-[1fr_360px]">
@@ -47,15 +85,19 @@
 				>
 					{t('lab.containers')}
 				</h2>
-				<div class="grid grid-cols-2 gap-3 md:grid-cols-4">
-					{#each experiment.containers as c (c.id)}
-						<ContainerCard
-							container={c}
-							selected={selectedId === c.id}
-							onSelect={() => toggleSelect(c.id)}
-						/>
-					{/each}
-				</div>
+				{#if view === 'visual'}
+					<VisualLabView />
+				{:else}
+					<div class="grid grid-cols-2 gap-3 md:grid-cols-4">
+						{#each experiment.containers as c (c.id)}
+							<ContainerCard
+								container={c}
+								selected={selectedId === c.id}
+								onSelect={() => toggleSelect(c.id)}
+							/>
+						{/each}
+					</div>
+				{/if}
 			</section>
 
 			<ReactionInfo />
@@ -79,3 +121,36 @@
 		</aside>
 	</div>
 </main>
+
+<style>
+	.view-btn {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.25rem;
+		padding: 0.3rem 0.6rem;
+		border-radius: 0.375rem;
+		font-size: 0.75rem;
+		font-weight: 600;
+		color: rgb(82 82 91);
+		transition: background-color 100ms ease;
+	}
+	.view-btn:hover:not(.view-btn--active) {
+		background: rgb(244 244 245);
+	}
+	.view-btn--active {
+		background: rgb(219 234 254);
+		color: rgb(29 78 216);
+	}
+	@media (prefers-color-scheme: dark) {
+		.view-btn {
+			color: rgb(212 212 216);
+		}
+		.view-btn:hover:not(.view-btn--active) {
+			background: rgb(39 39 42);
+		}
+		.view-btn--active {
+			background: rgba(30, 64, 175, 0.35);
+			color: rgb(147 197 253);
+		}
+	}
+</style>

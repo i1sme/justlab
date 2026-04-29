@@ -95,3 +95,40 @@ export function isVisibleAtMode(itemDifficulty: Difficulty, mode: UserMode | nul
 	if (effective === 'university') return true;
 	return itemDifficulty !== 'university';
 }
+
+// ============================================================
+// labView (Формальная / Визуальная лаборатория)
+// ============================================================
+
+/**
+ * Какой режим отображения лаборатории показывать:
+ *   - 'formal' — карточки контейнеров, цифры температуры, текст реакций (как сейчас).
+ *   - 'visual' — 3D-сцена со столом, посудой и приборами (Three.js).
+ * Не привязан к userMode — пользователь сам выбирает в шапке /lab.
+ */
+export type LabView = 'formal' | 'visual';
+
+const LAB_VIEW_KEY = 'justlab.labView';
+
+function readLabViewInitial(): LabView {
+	if (typeof localStorage === 'undefined') return 'formal';
+	const stored = localStorage.getItem(LAB_VIEW_KEY);
+	return stored === 'visual' ? 'visual' : 'formal';
+}
+
+let labView = $state<LabView>(readLabViewInitial());
+
+export function getLabView(): LabView {
+	return labView;
+}
+
+export function setLabView(next: LabView): void {
+	labView = next;
+	if (typeof localStorage !== 'undefined') {
+		localStorage.setItem(LAB_VIEW_KEY, next);
+	}
+}
+
+export function toggleLabView(): void {
+	setLabView(labView === 'formal' ? 'visual' : 'formal');
+}

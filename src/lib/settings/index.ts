@@ -6,5 +6,9 @@ export {
 	getEffectiveUserMode,
 	setUserMode,
 	isVisibleAtMode,
-	type UserMode
+	getLabView,
+	setLabView,
+	toggleLabView,
+	type UserMode,
+	type LabView
 } from './state.svelte';

@@ -163,6 +163,16 @@
 			"dismiss": "Dismiss",
 			"completed": "Completed",
 			"active": "Active"
+		},
+		"view": {
+			"label": "Lab view",
+			"formal": "Formal",
+			"visual": "Visual"
+		},
+		"visual": {
+			"canvasLabel": "3D lab scene",
+			"dragHint": "Drag to rotate the scene",
+			"noWebGL": "Your browser doesn't support WebGL2. Switch to formal view — full functionality is there."
 		}
 	},
 	"element": {
