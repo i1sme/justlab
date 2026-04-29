@@ -2,7 +2,8 @@
 	import type { Container } from '../../data/types';
 	import { findSubstance } from '../../data/substances';
 	import { getLocale, t } from '$lib/i18n';
-	import { emptyContainer, heat as heatStore } from '$lib/lab';
+	import { emptyContainer, heat as heatStore, getPlayback } from '$lib/lab';
+	import ReactionEffects from './ReactionEffects.svelte';
 
 	type Props = {
 		container: Container;
@@ -12,6 +13,7 @@
 	let { container, selected = false, onSelect }: Props = $props();
 
 	const locale = $derived(getLocale());
+	const playback = $derived(getPlayback(container.id));
 
 	function fmtTemp(k: number): string {
 		const c = k - 273.15;
@@ -57,7 +59,8 @@
 		<div class="font-mono text-[10px] text-zinc-400">{container.id}</div>
 	</div>
 
-	<!-- Стилизованное «стекло» с содержимым: цветной столбик внизу, пропорционально количеству. -->
+	<!-- Стилизованное «стекло» с содержимым: цветной столбик внизу, пропорционально количеству.
+	     position: relative нужен для абсолютно-позиционированного слоя ReactionEffects. -->
 	<div class="glass">
 		{#if container.contents.length === 0}
 			<div class="grid h-full place-items-center text-xs text-zinc-400 italic">
@@ -77,6 +80,7 @@
 				{/each}
 			</div>
 		{/if}
+		<ReactionEffects {playback} />
 	</div>
 
 	<!-- Список содержимого текстом — для читаемости. -->
@@ -96,7 +100,12 @@
 	{/if}
 
 	<div class="flex items-center justify-between gap-1.5">
-		<div class="text-xs text-zinc-600 dark:text-zinc-400" title={t('lab.temperature')}>
+		<div
+			class="temp-display text-xs text-zinc-600 dark:text-zinc-400"
+			class:temp-display--rise={playback?.tempPulse === 'rise'}
+			class:temp-display--drop={playback?.tempPulse === 'drop'}
+			title={t('lab.temperature')}
+		>
 			🌡 {fmtTemp(container.temperature)}
 		</div>
 		<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
@@ -176,11 +185,13 @@
 	}
 
 	.glass {
+		position: relative;
 		flex: 1 1 auto;
 		min-height: 80px;
 		border-radius: 0.5rem;
 		border: 1px solid rgb(228 228 231);
 		background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(0, 0, 0, 0.03) 100%);
+		overflow: hidden;
 	}
 	@media (prefers-color-scheme: dark) {
 		.glass {
@@ -196,6 +207,47 @@
 		flex: 1 1 0;
 		min-height: 4px;
 		opacity: 0.85;
+	}
+
+	/* Температурный пульс — кольцо-индикатор во время реакции с тепловой динамикой. */
+	.temp-display {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.25rem;
+		padding: 0.125rem 0.5rem;
+		border-radius: 999px;
+		border: 1.5px solid transparent;
+		transition: border-color 250ms ease;
+	}
+	.temp-display--rise {
+		border-color: rgba(239, 68, 68, 0.7); /* red-500 */
+		animation: temp-pulse-rise 0.9s ease-in-out infinite alternate;
+	}
+	.temp-display--drop {
+		border-color: rgba(59, 130, 246, 0.7); /* blue-500 */
+		animation: temp-pulse-drop 0.9s ease-in-out infinite alternate;
+	}
+	@keyframes temp-pulse-rise {
+		0% {
+			box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.35);
+		}
+		100% {
+			box-shadow: 0 0 0 6px rgba(239, 68, 68, 0);
+		}
+	}
+	@keyframes temp-pulse-drop {
+		0% {
+			box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.35);
+		}
+		100% {
+			box-shadow: 0 0 0 6px rgba(59, 130, 246, 0);
+		}
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.temp-display--rise,
+		.temp-display--drop {
+			animation: none;
+		}
 	}
 
 	.temp-btn {

@@ -10,6 +10,7 @@ import {
 	createCool,
 	createMix
 } from './lab-state';
+import { startPlayback, stopAll } from './reaction-playback.svelte';
 import type { Action, Experiment, Reaction } from '../../data/types';
 
 let experiment = $state<Experiment>(createInitialState());
@@ -38,11 +39,14 @@ export function dispatch(action: Action): void {
 	experiment = outcome.state;
 	if (outcome.triggeredReaction) {
 		lastReaction = { ...outcome.triggeredReaction, t: action.t };
+		// Запускаем визуальное воспроизведение в контейнере (timeline keyframes).
+		startPlayback(outcome.triggeredReaction.containerId, outcome.triggeredReaction.reaction);
 	}
 }
 
 /** Сбросить эксперимент в исходное состояние (новые пустые контейнеры). */
 export function resetExperiment(): void {
+	stopAll();
 	experiment = createInitialState();
 	lastReaction = null;
 	selectedContainerId = null;

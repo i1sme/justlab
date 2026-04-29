@@ -25,3 +25,12 @@ export {
 	heat,
 	mix
 } from './lab-store.svelte';
+
+export {
+	getPlayback,
+	getActivePlaybacks,
+	startPlayback,
+	stopPlayback,
+	stopAll as stopAllPlaybacks,
+	type ActivePlayback
+} from './reaction-playback.svelte';
