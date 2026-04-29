@@ -127,7 +127,14 @@
 		},
 		"reaction": {
 			"label": "Last reaction",
-			"none": "Nothing happened yet. Try mixing reagents or heating the contents."
+			"none": "Nothing happened yet. Try mixing reagents or heating the contents.",
+			"replay": "Replay",
+			"replayMotionOff": "Animations are off",
+			"unknown": {
+				"label": "Reaction unknown",
+				"description": "This combination isn't in our database. We don't invent products — it's better to say \"don't know\" than show fake chemistry.",
+				"beginnerHint": "Try a different pair, or adjust the temperature — some reactions only kick in when heated."
+			}
 		},
 		"inventorySearch": "Search substances…",
 		"inventoryEmpty": "Nothing matches — try a different name",
@@ -141,6 +148,17 @@
 			"oxides": "Oxides & catalysts",
 			"organic": "Organic",
 			"other": "Other"
+		},
+		"quests": {
+			"label": "Quests",
+			"allLabel": "All quests",
+			"pickOne": "Pick a quest below — the app will explain the goal and verify the result.",
+			"showHint": "Show hint",
+			"hideHint": "Hide hint",
+			"justCompleted": "Quest complete!",
+			"dismiss": "Dismiss",
+			"completed": "Completed",
+			"active": "Active"
 		}
 	},
 	"element": {
@@ -151,6 +169,17 @@
 		"block": "Block",
 		"category": "Category",
 		"empty": "Pick an element from the table"
+	},
+	"hazard": {
+		"explosive": "Explosive",
+		"flammable": "Flammable",
+		"oxidizing": "Oxidizing",
+		"compressed-gas": "Compressed gas",
+		"corrosive": "Corrosive",
+		"toxic": "Toxic",
+		"harmful": "Harmful / irritant",
+		"health-hazard": "Serious health hazard",
+		"environmental": "Environmental hazard"
 	},
 	"category": {
 		"alkali-metal": "Alkali metal",

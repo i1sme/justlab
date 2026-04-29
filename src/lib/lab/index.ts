@@ -16,6 +16,7 @@ export {
 export {
 	getExperiment,
 	getLastReaction,
+	getLastUnknown,
 	getSelectedContainerId,
 	setSelectedContainerId,
 	dispatch,
@@ -23,7 +24,10 @@ export {
 	emptyContainer,
 	addSubstance,
 	heat,
-	mix
+	mix,
+	replayLastReaction,
+	type LastReactionRecord,
+	type UnknownAttemptRecord
 } from './lab-store.svelte';
 
 export {
@@ -34,3 +38,14 @@ export {
 	stopAll as stopAllPlaybacks,
 	type ActivePlayback
 } from './reaction-playback.svelte';
+
+export {
+	getActiveQuest,
+	getActiveQuestId,
+	getCompletedIds as getCompletedQuestIds,
+	getJustCompletedId,
+	setActiveQuest,
+	clearJustCompleted,
+	isCompleted as isQuestCompleted,
+	resetQuestProgress
+} from './quest-store.svelte';

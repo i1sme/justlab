@@ -10,11 +10,32 @@ import {
 	createCool,
 	createMix
 } from './lab-state';
-import { startPlayback, stopAll } from './reaction-playback.svelte';
-import type { Action, Experiment, Reaction } from '../../data/types';
+import { getPlayback, startPlayback, stopAll } from './reaction-playback.svelte';
+import { recordReaction as recordQuestReaction } from './quest-store.svelte';
+import type { Action, ContainerContent, Experiment, Reaction } from '../../data/types';
+
+/**
+ * Запись об «известной» реакции — для UI ReactionInfo.
+ */
+export interface LastReactionRecord {
+	reaction: Reaction;
+	containerId: string;
+	t: number;
+}
+
+/**
+ * Запись об «неизвестной» комбинации — пользователь смешал 2+ вещества,
+ * но реакция не нашлась в БД. Принцип CLAUDE.md: «не выдумываем продукты».
+ */
+export interface UnknownAttemptRecord {
+	containerId: string;
+	contents: readonly ContainerContent[];
+	t: number;
+}
 
 let experiment = $state<Experiment>(createInitialState());
-let lastReaction = $state<{ reaction: Reaction; containerId: string; t: number } | null>(null);
+let lastReaction = $state<LastReactionRecord | null>(null);
+let lastUnknown = $state<UnknownAttemptRecord | null>(null);
 /** ID контейнера, выбранного пользователем (для добавления реактивов). */
 let selectedContainerId = $state<string | null>(null);
 
@@ -22,8 +43,12 @@ export function getExperiment(): Experiment {
 	return experiment;
 }
 
-export function getLastReaction(): { reaction: Reaction; containerId: string; t: number } | null {
+export function getLastReaction(): LastReactionRecord | null {
 	return lastReaction;
+}
+
+export function getLastUnknown(): UnknownAttemptRecord | null {
+	return lastUnknown;
 }
 
 export function getSelectedContainerId(): string | null {
@@ -39,9 +64,29 @@ export function dispatch(action: Action): void {
 	experiment = outcome.state;
 	if (outcome.triggeredReaction) {
 		lastReaction = { ...outcome.triggeredReaction, t: action.t };
+		lastUnknown = null;
 		// Запускаем визуальное воспроизведение в контейнере (timeline keyframes).
 		startPlayback(outcome.triggeredReaction.containerId, outcome.triggeredReaction.reaction);
+		// Уведомляем квестовый store — может быть, это цель активного задания.
+		recordQuestReaction(outcome.triggeredReaction.reaction.id);
+		return;
 	}
+	// Реакция не сработала — если пользователь явно пытался комбинировать
+	// (add-substance/mix) и в результате контейнер содержит 2+ уникальных вещества,
+	// фиксируем «неизвестная реакция» для честного UI.
+	const targetId = unknownTargetContainer(action);
+	if (targetId) {
+		const c = outcome.state.containers.find((c) => c.id === targetId);
+		if (c && c.contents.length >= 2) {
+			lastUnknown = { containerId: c.id, contents: c.contents, t: action.t };
+		}
+	}
+}
+
+function unknownTargetContainer(action: Action): string | null {
+	if (action.type === 'add-substance') return action.containerId;
+	if (action.type === 'mix') return action.targetId;
+	return null;
 }
 
 /** Сбросить эксперимент в исходное состояние (новые пустые контейнеры). */
@@ -49,6 +94,7 @@ export function resetExperiment(): void {
 	stopAll();
 	experiment = createInitialState();
 	lastReaction = null;
+	lastUnknown = null;
 	selectedContainerId = null;
 }
 
@@ -63,6 +109,8 @@ export function emptyContainer(containerId: string): void {
 		),
 		updatedAt: Date.now()
 	};
+	if (lastUnknown?.containerId === containerId) lastUnknown = null;
+	if (lastReaction?.containerId === containerId) lastReaction = null;
 }
 
 // === Convenience wrappers (для UI) ===
@@ -80,4 +128,16 @@ export function heat(containerId: string, deltaK: number): void {
 
 export function mix(sourceId: string, targetId: string): void {
 	dispatch(createMix(sourceId, targetId));
+}
+
+/**
+ * Повторно проиграть анимацию последней реакции (без изменения состояния — содержимое
+ * контейнера уже превращено в outputs). Если playback уже идёт — startPlayback его сбросит.
+ * Если motion off — ничего не произойдёт (внутренний guard в startPlayback).
+ */
+export function replayLastReaction(): boolean {
+	if (!lastReaction) return false;
+	if (getPlayback(lastReaction.containerId)) return false; // уже играет
+	startPlayback(lastReaction.containerId, lastReaction.reaction);
+	return true;
 }

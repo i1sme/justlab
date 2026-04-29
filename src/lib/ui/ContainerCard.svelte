@@ -4,6 +4,7 @@
 	import { getLocale, t } from '$lib/i18n';
 	import { emptyContainer, heat as heatStore, getPlayback } from '$lib/lab';
 	import ReactionEffects from './ReactionEffects.svelte';
+	import HazardBadge from './HazardBadge.svelte';
 
 	type Props = {
 		container: Container;
@@ -87,9 +88,19 @@
 	{#if container.contents.length > 0}
 		<ul class="space-y-0.5 text-xs">
 			{#each container.contents as item (item.substanceId)}
-				<li class="flex items-baseline justify-between gap-2">
-					<span class="truncate text-zinc-700 dark:text-zinc-300">
-						{nameOf(item.substanceId)}
+				{@const sub = findSubstance(item.substanceId)}
+				<li class="flex items-center justify-between gap-2">
+					<span class="flex min-w-0 items-center gap-1.5">
+						<span class="truncate text-zinc-700 dark:text-zinc-300">
+							{nameOf(item.substanceId)}
+						</span>
+						{#if sub?.hazards && sub.hazards.length > 0}
+							<span class="flex flex-shrink-0 items-center gap-0.5">
+								{#each sub.hazards as h (h)}
+									<HazardBadge hazard={h} />
+								{/each}
+							</span>
+						{/if}
 					</span>
 					<span class="flex-shrink-0 font-mono text-zinc-500 dark:text-zinc-400">
 						{formulaOf(item.substanceId)} ×{item.amount}

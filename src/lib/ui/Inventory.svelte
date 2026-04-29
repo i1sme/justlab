@@ -3,6 +3,7 @@
 	import { getLocale, t } from '$lib/i18n';
 	import { getUserMode, isVisibleAtMode } from '$lib/settings';
 	import { addSubstance, getSelectedContainerId } from '$lib/lab';
+	import HazardBadge from './HazardBadge.svelte';
 
 	type InventoryCategory =
 		| 'common'
@@ -141,12 +142,21 @@
 							<li>
 								<button
 									type="button"
-									class="flex w-full items-baseline justify-between gap-2 rounded-md bg-zinc-100 px-2.5 py-1.5 text-left transition-colors enabled:hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-zinc-800 enabled:dark:hover:bg-blue-900/40"
+									class="flex w-full items-center justify-between gap-2 rounded-md bg-zinc-100 px-2.5 py-1.5 text-left transition-colors enabled:hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-zinc-800 enabled:dark:hover:bg-blue-900/40"
 									disabled={!canAdd}
 									onclick={() => pick(s)}
 									title={s.id}
 								>
-									<span class="truncate text-sm">{s.names[getLocale()]}</span>
+									<span class="flex min-w-0 items-center gap-1.5">
+										<span class="truncate text-sm">{s.names[getLocale()]}</span>
+										{#if s.hazards && s.hazards.length > 0}
+											<span class="flex flex-shrink-0 items-center gap-0.5">
+												{#each s.hazards as h (h)}
+													<HazardBadge hazard={h} />
+												{/each}
+											</span>
+										{/if}
+									</span>
 									<span class="flex-shrink-0 font-mono text-xs text-zinc-600 dark:text-zinc-400">
 										{s.formula}
 									</span>

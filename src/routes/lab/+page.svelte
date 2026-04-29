@@ -2,6 +2,7 @@
 	import ContainerCard from '$lib/ui/ContainerCard.svelte';
 	import Inventory from '$lib/ui/Inventory.svelte';
 	import ReactionInfo from '$lib/ui/ReactionInfo.svelte';
+	import QuestPanel from '$lib/ui/QuestPanel.svelte';
 	import { t } from '$lib/i18n';
 	import {
 		getExperiment,
@@ -58,6 +59,7 @@
 			</section>
 
 			<ReactionInfo />
+			<QuestPanel />
 		</div>
 
 		<!-- Правая sticky-колонка: инвентарь -->
