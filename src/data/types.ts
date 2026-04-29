@@ -176,6 +176,15 @@ export type ReactionCategory =
 	| 'electrolysis'
 	| 'dissolution';
 
+/**
+ * Источник реакции:
+ *   - 'database' (или undefined) — точное совпадение в курируемой БД
+ *   - 'rules' — выведена из общих правил (растворимость, ряд активности, нейтрализация).
+ *     Это всё ещё проверяемая истина из учебника, но не «персональная» запись.
+ *     UI показывает соответствующую пометку, чтобы пользователь видел разницу.
+ */
+export type ReactionInferenceSource = 'database' | 'rules';
+
 export interface Reaction {
 	id: string;
 	category: ReactionCategory;
@@ -201,6 +210,9 @@ export interface Reaction {
 	difficulty: Difficulty;
 	/** Тэги: 'safe-for-school', 'spectacular', 'classic', ... */
 	tags?: readonly string[];
+
+	/** Откуда взялась реакция — БД или правиловый движок. По умолчанию 'database'. */
+	inferenceSource?: ReactionInferenceSource;
 }
 
 // ============================================================

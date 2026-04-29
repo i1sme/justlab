@@ -8,6 +8,7 @@
 // блокируют match — пользователь должен очистить инвентарь.
 
 import { REACTIONS_BY_KEY, buildLookupKey } from '../../data/reactions';
+import { predictByRules } from './reaction-rules';
 import type { Reaction, ReactantSpec, ReactionConditions } from '../../data/types';
 
 /** Условия в момент запроса (текущая температура контейнера, среда и т.п.). */
@@ -26,7 +27,13 @@ export interface UserConditions {
 
 /**
  * Найти реакцию для заданных входов и условий. Возвращает `null` если ничего не подходит.
- * Время поиска O(K) где K — число реакций с тем же набором участников (обычно 1–2).
+ *
+ * Двухступенчатый поиск:
+ *   1. Точный exact-match в курируемой БД (приоритетнее, аккуратнее анимация и описание).
+ *   2. Fallback — правиловый движок (нейтрализация, ряд активности, осаждение).
+ *      Возвращает Reaction с inferenceSource='rules'.
+ *
+ * Время поиска O(K + R), где K — число точных кандидатов, R — число правил (≤3).
  */
 export function findReaction(
 	inputs: readonly ReactantSpec[],
@@ -34,11 +41,13 @@ export function findReaction(
 ): Reaction | null {
 	const key = buildLookupKey(inputs.map((i) => i.substanceId));
 	const candidates = REACTIONS_BY_KEY.get(key);
-	if (!candidates) return null;
-	for (const r of candidates) {
-		if (matchesReaction(r, inputs, conditions)) return r;
+	if (candidates) {
+		for (const r of candidates) {
+			if (matchesReaction(r, inputs, conditions)) return r;
+		}
 	}
-	return null;
+	// Точного совпадения нет — пробуем правила.
+	return predictByRules(inputs, conditions);
 }
 
 function matchesReaction(

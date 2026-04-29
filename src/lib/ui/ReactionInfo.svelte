@@ -54,6 +54,16 @@
 			<div class="rounded-md bg-blue-50 px-3 py-2 font-mono text-sm dark:bg-blue-900/30">
 				{last.reaction.equation}
 			</div>
+			{#if last.reaction.inferenceSource === 'rules'}
+				<!-- Честный бейдж: реакция выведена из общих правил, а не точное совпадение в БД. -->
+				<div
+					class="inline-flex items-center gap-1 rounded-md bg-violet-100 px-2 py-1 text-xs font-medium text-violet-800 dark:bg-violet-900/30 dark:text-violet-300"
+					title={t('lab.reaction.inferred.tooltip')}
+				>
+					<span aria-hidden="true">⚙</span>
+					{t('lab.reaction.inferred.label')}
+				</div>
+			{/if}
 			<p class="text-sm text-zinc-700 dark:text-zinc-300">
 				{last.reaction.description[locale]}
 			</p>

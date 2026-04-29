@@ -288,6 +288,82 @@ export const INORGANIC_SUBSTANCES: readonly Substance[] = [
 		glossaryRefs: ['salt'],
 		difficulty: 'school'
 	},
+	{
+		id: 'potassium-chloride',
+		kind: 'molecule',
+		formula: 'KCl',
+		names: { ru: 'Хлорид калия', en: 'Potassium chloride' },
+		phases: {
+			solid: { color: '#ffffff' },
+			aqueous: { opacity: 0.95 }
+		},
+		defaultPhase: 'aqueous',
+		meltingPoint: 1043,
+		molarMass: 74.551,
+		glossaryRefs: ['salt'],
+		difficulty: 'school'
+	},
+	{
+		id: 'potassium-nitrate',
+		kind: 'molecule',
+		formula: 'KNO₃',
+		names: { ru: 'Нитрат калия (селитра)', en: 'Potassium nitrate' },
+		phases: {
+			solid: { color: '#ffffff' },
+			aqueous: { opacity: 0.95 }
+		},
+		defaultPhase: 'aqueous',
+		meltingPoint: 607,
+		molarMass: 101.103,
+		hazards: ['oxidizing'],
+		glossaryRefs: ['salt'],
+		difficulty: 'school'
+	},
+	{
+		id: 'zinc-sulfate',
+		kind: 'molecule',
+		formula: 'ZnSO₄',
+		names: { ru: 'Сульфат цинка', en: 'Zinc sulfate' },
+		phases: {
+			solid: { color: '#ffffff' },
+			aqueous: { opacity: 0.95 }
+		},
+		defaultPhase: 'aqueous',
+		meltingPoint: 953,
+		molarMass: 161.47,
+		hazards: ['harmful'],
+		glossaryRefs: ['salt'],
+		difficulty: 'school'
+	},
+	{
+		id: 'magnesium-sulfate',
+		kind: 'molecule',
+		formula: 'MgSO₄',
+		names: { ru: 'Сульфат магния (английская соль)', en: 'Magnesium sulfate' },
+		phases: {
+			solid: { color: '#ffffff' },
+			aqueous: { opacity: 0.95 }
+		},
+		defaultPhase: 'aqueous',
+		molarMass: 120.366,
+		glossaryRefs: ['salt'],
+		difficulty: 'school'
+	},
+	{
+		id: 'calcium-chloride',
+		kind: 'molecule',
+		formula: 'CaCl₂',
+		names: { ru: 'Хлорид кальция', en: 'Calcium chloride' },
+		phases: {
+			solid: { color: '#ffffff' },
+			aqueous: { opacity: 0.95 }
+		},
+		defaultPhase: 'aqueous',
+		meltingPoint: 1045,
+		molarMass: 110.984,
+		glossaryRefs: ['salt'],
+		difficulty: 'school'
+	},
 
 	// === Оксиды и карбонаты ===
 	{

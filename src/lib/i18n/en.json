@@ -130,6 +130,10 @@
 			"none": "Nothing happened yet. Try mixing reagents or heating the contents.",
 			"replay": "Replay",
 			"replayMotionOff": "Animations are off",
+			"inferred": {
+				"label": "Inferred from rules",
+				"tooltip": "This reaction was derived from general chemistry rules (solubility, neutralization, activity series), not from a specific entry in our database. Still textbook truth — just more general."
+			},
 			"unknown": {
 				"label": "Reaction unknown",
 				"description": "This combination isn't in our database. We don't invent products — it's better to say \"don't know\" than show fake chemistry.",

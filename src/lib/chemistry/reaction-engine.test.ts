@@ -245,13 +245,25 @@ describe('findReaction — отрицательные кейсы (CLAUDE.md «н
 		).toBeNull();
 	});
 
-	it('лишний реактив рядом с известной парой → null (exact match)', () => {
-		// HCl + NaOH работают, но если добавить water как третий — exact match нарушен.
+	it('лишний реактив рядом с известной парой — exact-match не находит, fallback на правила', () => {
+		// HCl + NaOH + дополнительно water: точного совпадения в БД нет (там 2 input'а, не 3),
+		// но реакция нейтрализации химически верна — её и должен вернуть правиловый движок.
+		// Помечена inferenceSource='rules', UI покажет соответствующий бейдж.
+		const r = findReaction([
+			{ substanceId: 'hydrochloric-acid', amount: 1, state: 'aqueous' },
+			{ substanceId: 'sodium-hydroxide', amount: 1, state: 'aqueous' },
+			{ substanceId: 'water', amount: 1, state: 'liquid' }
+		]);
+		expect(r?.inferenceSource).toBe('rules');
+		expect(r?.category).toBe('neutralization');
+	});
+
+	it('инертная пара воды и соли (NaCl растворим) → null', () => {
+		// Genuinely no reaction: вода + растворимая соль NaCl. Ни exact-match, ни правила.
 		expect(
 			findReaction([
-				{ substanceId: 'hydrochloric-acid', amount: 1, state: 'aqueous' },
-				{ substanceId: 'sodium-hydroxide', amount: 1, state: 'aqueous' },
-				{ substanceId: 'water', amount: 1, state: 'liquid' }
+				{ substanceId: 'water', amount: 1, state: 'liquid' },
+				{ substanceId: 'sodium-chloride', amount: 1, state: 'aqueous' }
 			])
 		).toBeNull();
 	});
