@@ -98,7 +98,50 @@
 	"nav": {
 		"table": "Periodic table",
 		"molecule": "Molecules",
-		"glossary": "Glossary"
+		"glossary": "Glossary",
+		"lab": "Lab"
+	},
+	"lab": {
+		"title": "Virtual lab",
+		"intro": "Pick a container, drop reagents from the inventory into it. If a known reaction matches — you'll see it. If not — the app honestly says \"reaction unknown\".",
+		"containers": "Glassware",
+		"inventory": "Reagents",
+		"conditions": "Container conditions",
+		"empty": "empty",
+		"reset": "Reset all",
+		"emptyContainer": "Empty",
+		"selectFirst": "Pick a container on the table first",
+		"selected": "selected",
+		"selectContainer": "Select",
+		"deselectContainer": "Deselect",
+		"temperature": "Temperature",
+		"heatStep": "+25 K",
+		"coolStep": "−25 K",
+		"resetTemp": "Room temp",
+		"containerKind": {
+			"test-tube": "Test tube",
+			"beaker": "Beaker",
+			"flask": "Flask",
+			"crucible": "Crucible",
+			"petri": "Petri dish"
+		},
+		"reaction": {
+			"label": "Last reaction",
+			"none": "Nothing happened yet. Try mixing reagents or heating the contents."
+		},
+		"inventorySearch": "Search substances…",
+		"inventoryEmpty": "Nothing matches — try a different name",
+		"inventoryCategory": {
+			"common": "Common",
+			"acids": "Acids",
+			"bases": "Bases",
+			"salts": "Salts",
+			"metals": "Metals",
+			"gases": "Gases",
+			"oxides": "Oxides & catalysts",
+			"organic": "Organic",
+			"other": "Other"
+		}
 	},
 	"element": {
 		"number": "Atomic number",

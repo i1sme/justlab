@@ -16,6 +16,7 @@
 	const navItems = [
 		{ href: resolve('/'), key: 'nav.table' },
 		{ href: resolve('/molecule'), key: 'nav.molecule' },
+		{ href: resolve('/lab'), key: 'nav.lab' },
 		{ href: resolve('/glossary'), key: 'nav.glossary' }
 	];
 

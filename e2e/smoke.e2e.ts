@@ -77,8 +77,51 @@ test('navigation between sections works', async ({ page }) => {
 	await page.getByRole('link', { name: /Глоссарий|Glossary/i }).click();
 	await expect(page).toHaveURL(/\/glossary\/?$/);
 
+	await page.getByRole('link', { name: /Лаборатория|^Lab/i }).click();
+	await expect(page).toHaveURL(/\/lab\/?$/);
+
 	await page.getByRole('link', { name: /Таблица|Periodic/i }).click();
 	await expect(page).toHaveURL(/^[^/]*\/?$|\/$/);
+});
+
+test.describe('lab — взаимодействие с реактивами', () => {
+	test('добавление HCl + NaOH в контейнер запускает реакцию', async ({ page }) => {
+		await page.goto('/lab');
+		await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+
+		// Кликаем по первому контейнеру (c1) — должен стать selected.
+		const firstContainer = page.locator('[role="button"][aria-pressed]').first();
+		await firstContainer.click();
+		await expect(firstContainer).toHaveAttribute('aria-pressed', 'true');
+
+		// Раскрываем категорию «Кислоты» (по умолчанию open) и добавляем HCl.
+		// Имя кнопки = "Соляная кислота HCl" (или English вариант).
+		await page
+			.getByRole('button', { name: /Соляная кислота|^Hydrochloric/i })
+			.first()
+			.click();
+
+		// Затем добавляем NaOH из категории «Основания».
+		await page
+			.getByRole('button', { name: /Гидроксид натрия|Sodium hydroxide/i })
+			.first()
+			.click();
+
+		// Реакция должна появиться в ReactionInfo: уравнение содержит NaCl.
+		await expect(page.getByText(/HCl.*NaOH.*NaCl.*H₂O|HCl.*NaCl/).first()).toBeVisible({
+			timeout: 5000
+		});
+	});
+
+	test('пустой клик по веществу без выбранного контейнера ничего не делает', async ({ page }) => {
+		await page.goto('/lab');
+		// Подсказка о выборе контейнера видна.
+		await expect(page.getByRole('status').filter({ hasText: /выбери|first/i })).toBeVisible();
+
+		// Кнопки веществ задизейблены.
+		const firstSubstance = page.getByRole('button', { name: /Вода|Water/i }).first();
+		await expect(firstSubstance).toBeDisabled();
+	});
 });
 
 test.describe('first-run wizard', () => {

@@ -101,7 +101,7 @@ const MOLECULE_PHASE: Readonly<Record<string, Phase>> = {
 	ammonia: 'gas',
 	'carbon-dioxide': 'gas',
 	'sulfur-dioxide': 'gas',
-	'hydrogen-peroxide': 'liquid',
+	'hydrogen-peroxide': 'aqueous', // в школьной лаборатории — водный раствор
 	'hydrochloric-acid': 'aqueous',
 	'sulfuric-acid': 'liquid',
 	'nitric-acid': 'liquid',
