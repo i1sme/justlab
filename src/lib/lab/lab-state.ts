@@ -286,3 +286,15 @@ export function createCool(
 export function createMix(sourceId: string, targetId: string, t: number = Date.now()): Action {
 	return { type: 'mix', sourceId, targetId, t };
 }
+
+export function createAddContainer(
+	kind: ContainerKind,
+	slotIndex: number,
+	t: number = Date.now()
+): Action {
+	return { type: 'add-container', kind, slotIndex, t };
+}
+
+export function createRemoveContainer(containerId: string, t: number = Date.now()): Action {
+	return { type: 'remove-container', containerId, t };
+}

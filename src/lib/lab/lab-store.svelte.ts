@@ -6,13 +6,21 @@ import {
 	applyAction,
 	createInitialState,
 	createAddSubstance,
+	createAddContainer,
 	createHeat,
 	createCool,
-	createMix
+	createMix,
+	createRemoveContainer
 } from './lab-state';
 import { getPlayback, startPlayback, stopAll } from './reaction-playback.svelte';
 import { recordReaction as recordQuestReaction } from './quest-store.svelte';
-import type { Action, ContainerContent, Experiment, Reaction } from '../../data/types';
+import type {
+	Action,
+	ContainerContent,
+	ContainerKind,
+	Experiment,
+	Reaction
+} from '../../data/types';
 
 /**
  * Запись об «известной» реакции — для UI ReactionInfo.
@@ -96,6 +104,25 @@ export function resetExperiment(): void {
 	lastReaction = null;
 	lastUnknown = null;
 	selectedContainerId = null;
+}
+
+/**
+ * Добавить новый контейнер указанного типа на стол. slotIndex — следующий после
+ * максимального текущего, чтобы не было коллизий после удалений посередине.
+ */
+export function addContainer(kind: ContainerKind): void {
+	const nextSlot = experiment.containers.length
+		? Math.max(...experiment.containers.map((c) => c.slotIndex)) + 1
+		: 0;
+	dispatch(createAddContainer(kind, nextSlot));
+}
+
+/** Удалить контейнер. Если он был выбран — снимаем выделение. */
+export function removeContainer(containerId: string): void {
+	dispatch(createRemoveContainer(containerId));
+	if (selectedContainerId === containerId) selectedContainerId = null;
+	if (lastUnknown?.containerId === containerId) lastUnknown = null;
+	if (lastReaction?.containerId === containerId) lastReaction = null;
 }
 
 /** Очистить содержимое одного контейнера, не удаляя его. */

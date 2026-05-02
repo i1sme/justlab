@@ -110,6 +110,9 @@
 		"empty": "empty",
 		"reset": "Reset all",
 		"emptyContainer": "Empty",
+		"removeContainer": "Remove container",
+		"addContainer": "Add",
+		"closeMenu": "Close menu",
 		"selectFirst": "Pick a container on the table first",
 		"selected": "selected",
 		"selectContainer": "Select",
@@ -172,6 +175,8 @@
 		"visual": {
 			"canvasLabel": "3D lab scene",
 			"dragHint": "Drag to rotate the scene",
+			"selectContainerHint": "Click a flask to select it. Drag the scene to rotate.",
+			"pourHint": "Click a bottle — its contents pour into the selected flask.",
 			"noWebGL": "Your browser doesn't support WebGL2. Switch to formal view — full functionality is there."
 		}
 	},

@@ -2,7 +2,7 @@
 	import type { Container } from '../../data/types';
 	import { findSubstance } from '../../data/substances';
 	import { getLocale, t } from '$lib/i18n';
-	import { emptyContainer, heat as heatStore, getPlayback } from '$lib/lab';
+	import { emptyContainer, heat as heatStore, getPlayback, removeContainer } from '$lib/lab';
 	import ReactionEffects from './ReactionEffects.svelte';
 	import HazardBadge from './HazardBadge.svelte';
 
@@ -153,6 +153,15 @@
 					⌫
 				</button>
 			{/if}
+			<button
+				type="button"
+				class="temp-btn text-zinc-500 dark:text-zinc-500"
+				aria-label={t('lab.removeContainer')}
+				onclick={() => removeContainer(container.id)}
+				title={t('lab.removeContainer')}
+			>
+				✕
+			</button>
 		</div>
 	</div>
 </div>

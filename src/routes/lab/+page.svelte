@@ -1,5 +1,6 @@
 <script lang="ts">
 	import ContainerCard from '$lib/ui/ContainerCard.svelte';
+	import ContainerToolbar from '$lib/ui/ContainerToolbar.svelte';
 	import Inventory from '$lib/ui/Inventory.svelte';
 	import ReactionInfo from '$lib/ui/ReactionInfo.svelte';
 	import QuestPanel from '$lib/ui/QuestPanel.svelte';
@@ -80,11 +81,7 @@
 		<!-- Левая колонка: стол с посудой + последняя реакция -->
 		<div class="space-y-4 lg:col-start-1 lg:row-start-1">
 			<section>
-				<h2
-					class="mb-2 text-xs font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400"
-				>
-					{t('lab.containers')}
-				</h2>
+				<ContainerToolbar />
 				{#if view === 'visual'}
 					<VisualLabView />
 				{:else}
