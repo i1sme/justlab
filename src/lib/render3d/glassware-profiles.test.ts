@@ -110,4 +110,13 @@ describe('liquidRadius', () => {
 		const fillH = liquidFillHeight('flask', 1);
 		expect(liquidRadius('flask', fillH)).toBeLessThan(interiorRadiusAt('flask', 0.03));
 	});
+
+	it('точные безопасные радиусы по типам (фиксируем поведение)', () => {
+		// Тигель расширяется кверху → минимум у дна (≈ базовый внутренний радиус 0.1 − стенка).
+		expect(liquidRadius('crucible', liquidFillHeight('crucible', 1))).toBeCloseTo(0.088, 3);
+		// Стакан — прямой цилиндр, безопасный радиус ≈ внутренний радиус стенки.
+		expect(liquidRadius('beaker', liquidFillHeight('beaker', 0.5))).toBeCloseTo(0.168, 3);
+		// Пробирка — дно поднимается от оси → безопасный радиус схлопывается в 0 (клампится в рендере).
+		expect(liquidRadius('test-tube', liquidFillHeight('test-tube', 1))).toBe(0);
+	});
 });
