@@ -369,7 +369,9 @@ function makeGlassware(
 	const segments = reducedQuality ? 24 : 48;
 
 	// Стекло — LatheGeometry профиля стенки (форма зависит от kind = данные).
-	const profile = glasswareProfile(kind).map((p) => new THREE.Vector2(p.r, p.y));
+	const rawProfile = glasswareProfile(kind);
+	const profile = rawProfile.map((p) => new THREE.Vector2(p.r, p.y));
+	const baseR = Math.max(...rawProfile.map((p) => p.r));
 	const glassGeo = new THREE.LatheGeometry(profile, segments);
 	const glassMat = new THREE.MeshStandardMaterial({
 		color: 0xcfeaf5,
@@ -397,7 +399,7 @@ function makeGlassware(
 	group.add(liquid);
 
 	// Кольцо выделения — синее свечение у основания (управляется applySelectionHighlight).
-	const ringGeo = new THREE.RingGeometry(0.24, 0.3, segments);
+	const ringGeo = new THREE.RingGeometry(baseR + 0.02, baseR + 0.08, segments);
 	const ringMat = new THREE.MeshBasicMaterial({
 		color: 0x2563eb,
 		transparent: true,
