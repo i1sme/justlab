@@ -51,7 +51,10 @@ describe('radiusAtHeight / interiorRadiusAt', () => {
 
 	it('внутренний радиус меньше внешнего ровно на толщину стенки', () => {
 		const y = 0.1;
-		expect(interiorRadiusAt('beaker', y)).toBeCloseTo(radiusAtHeight('beaker', y) - WALL_THICKNESS, 5);
+		expect(interiorRadiusAt('beaker', y)).toBeCloseTo(
+			radiusAtHeight('beaker', y) - WALL_THICKNESS,
+			5
+		);
 	});
 
 	it('внутренний радиус никогда не отрицателен', () => {
