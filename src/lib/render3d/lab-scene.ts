@@ -7,7 +7,7 @@
 // v1 — минималистичный «школьный кабинет» с упрощённым фоном (запрос пользователя):
 //   - стол (плоскость с тёплым серым цветом)
 //   - задняя стена-градиент
-//   - placeholder-контейнеры как стеклянные цилиндры (полная геометрия посуды — фаза 6b4)
+//   - посуда (стакан/колба/пробирка/тигель/чашка) — LatheGeometry из профилей glassware-profiles
 //   - бутылки реактивов на заднем ряду стола (этикетки с формулой)
 //   - Raycaster для клика по контейнерам/бутылкам — состояние держит lab-store через колбэки
 //
@@ -16,8 +16,9 @@
 
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import type { Container } from '../../data/types';
+import type { Container, ContainerKind } from '../../data/types';
 import { findSubstance } from '../../data/substances';
+import { glasswareProfile, liquidFillHeight, liquidRadius } from './glassware-profiles';
 
 export interface BottleSpec {
 	substanceId: string;
@@ -210,7 +211,7 @@ export function mountLabScene(
 		list.forEach((c, idx) => {
 			let mesh = containerMeshes.get(c.id);
 			if (!mesh) {
-				mesh = makePlaceholderContainer(reducedQuality, c.id);
+				mesh = makeGlassware(c.kind, reducedQuality, c.id);
 				scene.add(mesh);
 				containerMeshes.set(c.id, mesh);
 				clickableObjects.push(mesh);
@@ -357,54 +358,48 @@ function makeTable(): THREE.Group {
 	return group;
 }
 
-function makePlaceholderContainer(reducedQuality: boolean, containerId: string): THREE.Group {
+function makeGlassware(
+	kind: ContainerKind,
+	reducedQuality: boolean,
+	containerId: string
+): THREE.Group {
 	const group = new THREE.Group();
 	group.userData = { kind: KIND_CONTAINER, containerId };
 
-	const segments = reducedQuality ? 16 : 32;
-	const glassGeo = new THREE.CylinderGeometry(0.18, 0.18, 0.42, segments, 1, true);
+	const segments = reducedQuality ? 24 : 48;
+
+	// Стекло — LatheGeometry профиля стенки (форма зависит от kind = данные).
+	const rawProfile = glasswareProfile(kind);
+	const profile = rawProfile.map((p) => new THREE.Vector2(p.r, p.y));
+	const baseR = Math.max(...rawProfile.map((p) => p.r));
+	const glassGeo = new THREE.LatheGeometry(profile, segments);
 	const glassMat = new THREE.MeshStandardMaterial({
-		color: 0xc8e6f5,
+		color: 0xcfeaf5,
 		transparent: true,
-		opacity: 0.35,
-		roughness: 0.05,
+		opacity: 0.3,
+		roughness: 0.08,
 		metalness: 0.0,
 		side: THREE.DoubleSide
 	});
 	const glass = new THREE.Mesh(glassGeo, glassMat);
-	glass.position.y = 0.21;
 	glass.name = 'glass';
 	group.add(glass);
 
-	// Дно — полупрозрачный диск.
-	const baseGeo = new THREE.CircleGeometry(0.18, segments);
-	const baseMat = new THREE.MeshStandardMaterial({
-		color: 0xc8e6f5,
-		transparent: true,
-		opacity: 0.5,
-		roughness: 0.05
-	});
-	const base = new THREE.Mesh(baseGeo, baseMat);
-	base.rotation.x = -Math.PI / 2;
-	base.position.y = 0.001;
-	group.add(base);
-
-	// Жидкость — обновляется при changes.
-	const liquidGeo = new THREE.CylinderGeometry(0.16, 0.16, 0.3, segments);
+	// Жидкость — единичный цилиндр (r=1, h=1), масштабируется в updateContainerVisual.
+	const liquidGeo = new THREE.CylinderGeometry(1, 1, 1, segments);
 	const liquidMat = new THREE.MeshStandardMaterial({
 		color: 0xffffff,
 		transparent: true,
-		opacity: 0.0,
+		opacity: 0,
 		roughness: 0.4
 	});
 	const liquid = new THREE.Mesh(liquidGeo, liquidMat);
-	liquid.position.y = 0.16;
 	liquid.name = 'liquid';
 	liquid.visible = false;
 	group.add(liquid);
 
-	// Selection ring — синее свечение под основанием. Включается через applySelectionHighlight.
-	const ringGeo = new THREE.RingGeometry(0.21, 0.27, segments);
+	// Кольцо выделения — синее свечение у основания (управляется applySelectionHighlight).
+	const ringGeo = new THREE.RingGeometry(baseR + 0.02, baseR + 0.08, segments);
 	const ringMat = new THREE.MeshBasicMaterial({
 		color: 0x2563eb,
 		transparent: true,
@@ -432,21 +427,28 @@ function updateContainerVisual(group: THREE.Object3D, c: Container): void {
 	}
 
 	const total = c.contents.reduce((s, x) => s + x.amount, 0);
-	const fillRatio = Math.min(1, total / 4);
+	const fillRatio = Math.min(1, total / 4); // 4 «единицы» = полный сосуд
+	const fillH = liquidFillHeight(c.kind, fillRatio);
+	if (fillH <= 0) {
+		liquid.visible = false;
+		return;
+	}
 
+	// Радиус столба жидкости — безопасный (не протыкает стенку сужающейся колбы).
+	const radius = Math.max(0.02, liquidRadius(c.kind, fillH));
+
+	// Цвет — по «верхнему» (последнему добавленному) компоненту.
 	const top = c.contents[c.contents.length - 1];
 	const sub = findSubstance(top.substanceId);
 	const color = sub?.phases[top.phase]?.color ?? '#a8c8e8';
 	const mat = liquid.material as THREE.MeshStandardMaterial;
 	mat.color.set(color);
-	mat.opacity = 0.75;
-	mat.transparent = true;
+	mat.opacity = 0.8;
 	mat.needsUpdate = true;
 
-	const fullH = 0.3;
-	const h = Math.max(0.05, fullH * fillRatio);
-	liquid.scale.set(1, h / fullH, 1);
-	liquid.position.y = h / 2 + 0.01;
+	// Единичный цилиндр → масштаб под фактические радиус/высоту.
+	liquid.scale.set(radius, fillH, radius);
+	liquid.position.y = fillH / 2 + 0.005;
 	liquid.visible = true;
 }
 
