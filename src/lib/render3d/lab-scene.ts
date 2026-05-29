@@ -7,7 +7,7 @@
 // v1 — минималистичный «школьный кабинет» с упрощённым фоном (запрос пользователя):
 //   - стол (плоскость с тёплым серым цветом)
 //   - задняя стена-градиент
-//   - placeholder-контейнеры как стеклянные цилиндры (полная геометрия посуды — фаза 6b4)
+//   - посуда (стакан/колба/пробирка/тигель/чашка) — LatheGeometry из профилей glassware-profiles
 //   - бутылки реактивов на заднем ряду стола (этикетки с формулой)
 //   - Raycaster для клика по контейнерам/бутылкам — состояние держит lab-store через колбэки
 //
@@ -18,7 +18,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import type { Container, ContainerKind } from '../../data/types';
 import { findSubstance } from '../../data/substances';
-import { glasswareProfile, interiorRadiusAt, liquidFillHeight } from './glassware-profiles';
+import { glasswareProfile, liquidFillHeight, liquidRadius } from './glassware-profiles';
 
 export interface BottleSpec {
 	substanceId: string;
@@ -432,8 +432,8 @@ function updateContainerVisual(group: THREE.Object3D, c: Container): void {
 		return;
 	}
 
-	// Радиус столба жидкости — внутренний радиус на середине высоты столба.
-	const radius = Math.max(0.02, interiorRadiusAt(c.kind, fillH * 0.5));
+	// Радиус столба жидкости — безопасный (не протыкает стенку сужающейся колбы).
+	const radius = Math.max(0.02, liquidRadius(c.kind, fillH));
 
 	// Цвет — по «верхнему» (последнему добавленному) компоненту.
 	const top = c.contents[c.contents.length - 1];

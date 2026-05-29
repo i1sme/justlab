@@ -5,6 +5,7 @@ import {
 	radiusAtHeight,
 	interiorRadiusAt,
 	liquidFillHeight,
+	liquidRadius,
 	WALL_THICKNESS
 } from './glassware-profiles';
 import type { ContainerKind } from '../../data/types';
@@ -80,5 +81,33 @@ describe('liquidFillHeight', () => {
 	it('клампит fillRatio за пределами 0..1', () => {
 		expect(liquidFillHeight('beaker', -1)).toBe(0);
 		expect(liquidFillHeight('beaker', 5)).toBe(liquidFillHeight('beaker', 1));
+	});
+});
+
+describe('liquidRadius', () => {
+	it('никогда не выходит за внутренний радиус стенки по всей высоте столба', () => {
+		for (const kind of KINDS) {
+			for (const ratio of [0.25, 0.5, 0.75, 1]) {
+				const fillH = liquidFillHeight(kind, ratio);
+				const r = liquidRadius(kind, fillH);
+				for (let y = fillH / 24; y <= fillH; y += fillH / 24) {
+					expect(r).toBeLessThanOrEqual(interiorRadiusAt(kind, y) + 1e-9);
+				}
+			}
+		}
+	});
+
+	it('0 при нулевой высоте', () => {
+		expect(liquidRadius('beaker', 0)).toBe(0);
+	});
+
+	it('для стакана ≈ постоянный внутренний радиус', () => {
+		const fillH = liquidFillHeight('beaker', 0.5);
+		expect(liquidRadius('beaker', fillH)).toBeCloseTo(interiorRadiusAt('beaker', fillH), 2);
+	});
+
+	it('для колбы при высоком уровне столб уже базового (сужение кверху)', () => {
+		const fillH = liquidFillHeight('flask', 1);
+		expect(liquidRadius('flask', fillH)).toBeLessThan(interiorRadiusAt('flask', 0.03));
 	});
 });

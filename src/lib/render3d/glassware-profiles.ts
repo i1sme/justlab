@@ -98,3 +98,34 @@ export function liquidFillHeight(kind: ContainerKind, fillRatio: number): number
 	const clamped = Math.max(0, Math.min(1, fillRatio));
 	return glasswareHeight(kind) * FILL_HEADROOM * clamped;
 }
+
+/**
+ * Безопасный радиус цилиндра-жидкости: наибольший, при котором столб высотой fillH
+ * не выходит за внутреннюю стенку ни на одной высоте. Профиль кусочно-линейный, поэтому
+ * минимум внутреннего радиуса достигается на конце одного из отрезков профиля.
+ * Для каждого отрезка проверяем оба конца (нижний сдвигается чуть выше 0, чтобы не брать
+ * осевую точку r=0). Правило: на возрастающем сегменте минимум — у нижнего конца.
+ */
+export function liquidRadius(kind: ContainerKind, fillH: number): number {
+	if (fillH <= 0) return 0;
+	let minR = interiorRadiusAt(kind, fillH); // у поверхности жидкости
+	const pts = glasswareProfile(kind);
+	// Проверяем все вершины профиля с y > 0 в диапазоне [0, fillH].
+	for (const p of pts) {
+		if (p.y > 0 && p.y <= fillH) {
+			minR = Math.min(minR, interiorRadiusAt(kind, p.y));
+		}
+	}
+	// Проверяем нижние концы отрезков (где профиль может быть ещё уже, чем в ближайшей вершине).
+	for (let i = 0; i + 1 < pts.length; i++) {
+		const a = pts[i];
+		const b = pts[i + 1];
+		if (b.y <= 0 || a.y >= fillH) continue;
+		// Нижний конец отрезка (сдвинут чуть выше 0, чтобы не захватить осевую точку r=0).
+		const yLow = Math.max(a.y, 1e-6);
+		const span = b.y - a.y;
+		const rLow = span > 0 ? a.r + (b.r - a.r) * ((yLow - a.y) / span) : b.r;
+		minR = Math.min(minR, Math.max(0, rLow - WALL_THICKNESS));
+	}
+	return Math.max(0, minR);
+}
