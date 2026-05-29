@@ -85,7 +85,10 @@ describe('radiusAtHeight / interiorRadiusAt', () => {
 
 	it('внутренний радиус меньше внешнего ровно на толщину стенки', () => {
 		const y = 0.1;
-		expect(interiorRadiusAt('beaker', y)).toBeCloseTo(radiusAtHeight('beaker', y) - WALL_THICKNESS, 5);
+		expect(interiorRadiusAt('beaker', y)).toBeCloseTo(
+			radiusAtHeight('beaker', y) - WALL_THICKNESS,
+			5
+		);
 	});
 
 	it('внутренний радиус никогда не отрицателен', () => {
@@ -265,11 +268,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import type { Container, ContainerKind } from '../../data/types';
 import { findSubstance } from '../../data/substances';
-import {
-	glasswareProfile,
-	interiorRadiusAt,
-	liquidFillHeight
-} from './glassware-profiles';
+import { glasswareProfile, interiorRadiusAt, liquidFillHeight } from './glassware-profiles';
 ```
 
 - [ ] **Step 2: Add the `makeGlassware` factory**
@@ -340,23 +339,23 @@ function makeGlassware(
 In `src/lib/render3d/lab-scene.ts`, inside `rebuildContainers`, find:
 
 ```ts
-			if (!mesh) {
-				mesh = makePlaceholderContainer(reducedQuality, c.id);
-				scene.add(mesh);
-				containerMeshes.set(c.id, mesh);
-				clickableObjects.push(mesh);
-			}
+if (!mesh) {
+	mesh = makePlaceholderContainer(reducedQuality, c.id);
+	scene.add(mesh);
+	containerMeshes.set(c.id, mesh);
+	clickableObjects.push(mesh);
+}
 ```
 
 Replace with:
 
 ```ts
-			if (!mesh) {
-				mesh = makeGlassware(c.kind, reducedQuality, c.id);
-				scene.add(mesh);
-				containerMeshes.set(c.id, mesh);
-				clickableObjects.push(mesh);
-			}
+if (!mesh) {
+	mesh = makeGlassware(c.kind, reducedQuality, c.id);
+	scene.add(mesh);
+	containerMeshes.set(c.id, mesh);
+	clickableObjects.push(mesh);
+}
 ```
 
 - [ ] **Step 4: Rewrite `updateContainerVisual`**
@@ -404,6 +403,7 @@ function updateContainerVisual(group: THREE.Object3D, c: Container): void {
 
 Run: `npm run format && npm run check && npm run build`
 Expected:
+
 - format: writes/leaves files clean (no error)
 - check: `COMPLETED ... 0 ERRORS 0 WARNINGS`
 - build: `✓ built` and `✔ done`
@@ -427,6 +427,7 @@ git commit -m "visual lab: parameterised glassware replaces placeholder cylinder
 
 Run: `npm run check && npm run lint && npm run test:unit -- --run && npm run build && npm run test:e2e`
 Expected:
+
 - check: 0 errors, 0 warnings
 - lint: "All matched files use Prettier code style!" and no eslint errors
 - unit: all tests pass (130 existing + new glassware-profiles tests)
@@ -436,6 +437,7 @@ Expected:
 - [ ] **Step 2: Manual smoke (visual confirmation)**
 
 Run: `npm run dev`, open `/lab`, switch to the Visual toggle (🧪). Confirm:
+
 - Each starter container renders as a distinct vessel (2 beakers, 1 test-tube, 1 crucible).
 - Adding a reagent (select a flask → click a bottle) fills it with coloured liquid at a believable level.
 - The "Add" toolbar can spawn a flask / petri and they render with the correct distinct shape.
