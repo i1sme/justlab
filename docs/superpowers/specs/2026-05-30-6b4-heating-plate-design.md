@@ -15,7 +15,7 @@ The user has explicitly confirmed both the design choices below and the build or
 ## 2. Goal & key decisions
 
 1. **Add a 3D heating plate** to the visual lab — atmospheric counterpart to the existing `−`/`+` controls.
-2. **No physical slot in v1**: the plate operates on the *currently selected* container — its display shows that container's temperature; control-panel buttons set its target T via the existing `heat`/`cool` actions. Drag-onto-plate and a real "on the plate" slot are deferred to 6b6 (drag-and-drop) or polish.
+2. **No physical slot in v1**: the plate operates on the _currently selected_ container — its display shows that container's temperature; control-panel buttons set its target T via the existing `heat`/`cool` actions. Drag-onto-plate and a real "on the plate" slot are deferred to 6b6 (drag-and-drop) or polish.
 3. **Three-step intensity** mapping (matches the reference's panel):
    - **OFF**: 298 K (room) via `cool` action
    - **I**: 400 K (~127 °C) — gentle warming, dissolution
@@ -23,7 +23,7 @@ The user has explicitly confirmed both the design choices below and the build or
    - **III**: 1100 K (~827 °C) — flame tests, combustion
 4. **Coexistence with `−`/`+`**: existing per-container temperature controls stay — they're fine-tune. The plate provides standard thresholds + atmosphere.
 5. **Built concretely** — no `Apparatus` base class yet (rule of three — extract later when clamp / burner / scale arrive).
-6. The universal-primitive principle applies *internally*: intensity → target T is pure data + a pure function, fully unit-testable.
+6. The universal-primitive principle applies _internally_: intensity → target T is pure data + a pure function, fully unit-testable.
 
 ## 3. Architecture
 
@@ -51,7 +51,7 @@ Factory `makeHeatingPlate({ reducedQuality }): { group: THREE.Group, setIntensit
 ### 3.3 Integration in `lab-scene.ts`
 
 - Place one heating plate on the table to the right of the container row (`x = TABLE_W * 0.3, z = 0` roughly), with its `userData` registered for raycaster hits.
-- Extend the existing pointer-click handler: when a `heating-button` is hit, look at `userData.intensity`, decide via `isHeatingAction(...)` whether to dispatch `heat` or `cool` against the *selected* container, and call `setIntensity` on the plate for visual feedback. If no container is selected, no-op (the existing hint string already covers it).
+- Extend the existing pointer-click handler: when a `heating-button` is hit, look at `userData.intensity`, decide via `isHeatingAction(...)` whether to dispatch `heat` or `cool` against the _selected_ container, and call `setIntensity` on the plate for visual feedback. If no container is selected, no-op (the existing hint string already covers it).
 - After every `setContainers` call, push the selected container's current T into `setDisplayTemp` so the display stays live.
 - Plate intensity state is scene-local (not part of lab-state — it's a UI affordance, not domain truth). Re-mounting the scene resets the plate to OFF; that's fine for v1.
 
@@ -70,7 +70,7 @@ Factory `makeHeatingPlate({ reducedQuality }): { group: THREE.Group, setIntensit
 
 - **Perf:** plate ≈ 6–8 meshes (base, top, panel, ~4 buttons, display) + a few canvas textures. Well under budget.
 - **Space:** pure module ≈ 30 LOC + ≈ 40 LOC tests; render module ≈ 150 LOC. Net contribution to bundle is small (no new deps).
-- **i18n:** the panel label "НАГРЕВ" is iconic and language-neutral in the reference image. For v1 keep it as a fixed Russian word baked into the texture *because it's a label on a physical-looking device*, like a brand. Future polish could swap the texture per locale.
+- **i18n:** the panel label "НАГРЕВ" is iconic and language-neutral in the reference image. For v1 keep it as a fixed Russian word baked into the texture _because it's a label on a physical-looking device_, like a brand. Future polish could swap the texture per locale.
 - **Principles preserved:** reaction honesty, event-sourcing, and the data+contract principle are unchanged — the plate is a new UI affordance that dispatches existing actions.
 
 ## 5. Out of scope (deferred)

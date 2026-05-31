@@ -74,12 +74,12 @@ describe('targetTemperatureFor', () => {
 });
 
 describe('isHeatingAction', () => {
-	it("heat когда целевая выше текущей сверх ε", () => {
+	it('heat когда целевая выше текущей сверх ε', () => {
 		expect(isHeatingAction(3, 298)).toBe('heat');
 		expect(isHeatingAction(1, 350)).toBe('heat');
 	});
 
-	it("cool когда целевая ниже текущей сверх ε", () => {
+	it('cool когда целевая ниже текущей сверх ε', () => {
 		expect(isHeatingAction(0, 800)).toBe('cool');
 		expect(isHeatingAction(1, 1000)).toBe('cool');
 	});
@@ -481,11 +481,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import type { Container, ContainerKind } from '../../data/types';
 import { findSubstance } from '../../data/substances';
 import { glasswareProfile, liquidFillHeight, liquidRadius } from './glassware-profiles';
-import {
-	KIND_HEATING_BUTTON,
-	makeHeatingPlate,
-	type HeatingPlateHandle
-} from './heating-plate';
+import { KIND_HEATING_BUTTON, makeHeatingPlate, type HeatingPlateHandle } from './heating-plate';
 import type { HeatingIntensity } from './heating-plate-logic';
 ```
 
@@ -539,33 +535,33 @@ export interface LabSceneHandle {
 Then find the existing block where the container/bottle maps are initialized and the initial rebuilds are called:
 
 ```ts
-	// Map<id, Object3D> — переиспользуем mesh-и при обновлениях, чтобы не пересоздавать.
-	const containerMeshes = new Map<string, THREE.Object3D>();
-	const bottleMeshes = new Map<string, THREE.Object3D>();
-	const clickableObjects: THREE.Object3D[] = [];
+// Map<id, Object3D> — переиспользуем mesh-и при обновлениях, чтобы не пересоздавать.
+const containerMeshes = new Map<string, THREE.Object3D>();
+const bottleMeshes = new Map<string, THREE.Object3D>();
+const clickableObjects: THREE.Object3D[] = [];
 
-	rebuildContainers(opts.containers);
-	rebuildBottles(opts.bottles);
-	applySelectionHighlight();
+rebuildContainers(opts.containers);
+rebuildBottles(opts.bottles);
+applySelectionHighlight();
 ```
 
 Replace with (adds the heating plate mount and registers it as clickable):
 
 ```ts
-	// Map<id, Object3D> — переиспользуем mesh-и при обновлениях, чтобы не пересоздавать.
-	const containerMeshes = new Map<string, THREE.Object3D>();
-	const bottleMeshes = new Map<string, THREE.Object3D>();
-	const clickableObjects: THREE.Object3D[] = [];
+// Map<id, Object3D> — переиспользуем mesh-и при обновлениях, чтобы не пересоздавать.
+const containerMeshes = new Map<string, THREE.Object3D>();
+const bottleMeshes = new Map<string, THREE.Object3D>();
+const clickableObjects: THREE.Object3D[] = [];
 
-	// Нагревательная плитка — одна на сцену, справа от ряда контейнеров.
-	const heatingPlate: HeatingPlateHandle = makeHeatingPlate({ reducedQuality });
-	heatingPlate.group.position.set(1.3, 0.005, 0.3);
-	scene.add(heatingPlate.group);
-	clickableObjects.push(heatingPlate.group);
+// Нагревательная плитка — одна на сцену, справа от ряда контейнеров.
+const heatingPlate: HeatingPlateHandle = makeHeatingPlate({ reducedQuality });
+heatingPlate.group.position.set(1.3, 0.005, 0.3);
+scene.add(heatingPlate.group);
+clickableObjects.push(heatingPlate.group);
 
-	rebuildContainers(opts.containers);
-	rebuildBottles(opts.bottles);
-	applySelectionHighlight();
+rebuildContainers(opts.containers);
+rebuildBottles(opts.bottles);
+applySelectionHighlight();
 ```
 
 Then find the existing pointer-up raycaster click dispatch inside `onPointerUp`:
@@ -674,87 +670,87 @@ Replace with (adds the plate disposal):
 In `src/lib/ui/VisualLabView.svelte`, find the existing lab-store import block:
 
 ```ts
-	import {
-		addSubstance,
-		emptyContainer,
-		getExperiment,
-		getSelectedContainerId,
-		heat,
-		removeContainer,
-		setSelectedContainerId
-	} from '$lib/lab';
-	import { t } from '$lib/i18n';
+import {
+	addSubstance,
+	emptyContainer,
+	getExperiment,
+	getSelectedContainerId,
+	heat,
+	removeContainer,
+	setSelectedContainerId
+} from '$lib/lab';
+import { t } from '$lib/i18n';
 ```
 
 Replace with (adds the two pure helpers from `heating-plate-logic`):
 
 ```ts
-	import {
-		addSubstance,
-		emptyContainer,
-		getExperiment,
-		getSelectedContainerId,
-		heat,
-		removeContainer,
-		setSelectedContainerId
-	} from '$lib/lab';
-	import {
-		isHeatingAction,
-		targetTemperatureFor,
-		type HeatingIntensity
-	} from '$lib/render3d/heating-plate-logic';
-	import { t } from '$lib/i18n';
+import {
+	addSubstance,
+	emptyContainer,
+	getExperiment,
+	getSelectedContainerId,
+	heat,
+	removeContainer,
+	setSelectedContainerId
+} from '$lib/lab';
+import {
+	isHeatingAction,
+	targetTemperatureFor,
+	type HeatingIntensity
+} from '$lib/render3d/heating-plate-logic';
+import { t } from '$lib/i18n';
 ```
 
 Then find the existing `mountLabScene` call inside the mounting `$effect`:
 
 ```ts
-				local = mod.mountLabScene(target, {
-					containers: initialContainers,
-					bottles: VISIBLE_BOTTLES,
-					selectedContainerId: initialSelected,
-					reducedQuality: quality === 'low',
-					motionEnabled: getMotionEnabled(),
-					onContainerClick: (id) => {
-						setSelectedContainerId(getSelectedContainerId() === id ? null : id);
-					},
-					onBottleClick: (substanceId) => {
-						const target = getSelectedContainerId();
-						if (!target) return; // молча игнорируем — UX-подсказка через рамку под выбранную колбу
-						addSubstance(target, substanceId, 1);
-					}
-				});
+local = mod.mountLabScene(target, {
+	containers: initialContainers,
+	bottles: VISIBLE_BOTTLES,
+	selectedContainerId: initialSelected,
+	reducedQuality: quality === 'low',
+	motionEnabled: getMotionEnabled(),
+	onContainerClick: (id) => {
+		setSelectedContainerId(getSelectedContainerId() === id ? null : id);
+	},
+	onBottleClick: (substanceId) => {
+		const target = getSelectedContainerId();
+		if (!target) return; // молча игнорируем — UX-подсказка через рамку под выбранную колбу
+		addSubstance(target, substanceId, 1);
+	}
+});
 ```
 
 Replace with (adds `onHeatingButtonClick` wiring):
 
 ```ts
-				local = mod.mountLabScene(target, {
-					containers: initialContainers,
-					bottles: VISIBLE_BOTTLES,
-					selectedContainerId: initialSelected,
-					reducedQuality: quality === 'low',
-					motionEnabled: getMotionEnabled(),
-					onContainerClick: (id) => {
-						setSelectedContainerId(getSelectedContainerId() === id ? null : id);
-					},
-					onBottleClick: (substanceId) => {
-						const target = getSelectedContainerId();
-						if (!target) return; // молча игнорируем — UX-подсказка через рамку под выбранную колбу
-						addSubstance(target, substanceId, 1);
-					},
-					onHeatingButtonClick: (intensity: HeatingIntensity) => {
-						const cid = getSelectedContainerId();
-						if (!cid) return;
-						const exp = getExperiment();
-						const c = exp.containers.find((x) => x.id === cid);
-						if (!c) return;
-						const action = isHeatingAction(intensity, c.temperature);
-						if (action === 'noop') return;
-						const delta = targetTemperatureFor(intensity) - c.temperature;
-						heat(cid, delta);
-					}
-				});
+local = mod.mountLabScene(target, {
+	containers: initialContainers,
+	bottles: VISIBLE_BOTTLES,
+	selectedContainerId: initialSelected,
+	reducedQuality: quality === 'low',
+	motionEnabled: getMotionEnabled(),
+	onContainerClick: (id) => {
+		setSelectedContainerId(getSelectedContainerId() === id ? null : id);
+	},
+	onBottleClick: (substanceId) => {
+		const target = getSelectedContainerId();
+		if (!target) return; // молча игнорируем — UX-подсказка через рамку под выбранную колбу
+		addSubstance(target, substanceId, 1);
+	},
+	onHeatingButtonClick: (intensity: HeatingIntensity) => {
+		const cid = getSelectedContainerId();
+		if (!cid) return;
+		const exp = getExperiment();
+		const c = exp.containers.find((x) => x.id === cid);
+		if (!c) return;
+		const action = isHeatingAction(intensity, c.temperature);
+		if (action === 'noop') return;
+		const delta = targetTemperatureFor(intensity) - c.temperature;
+		heat(cid, delta);
+	}
+});
 ```
 
 Then find the existing `$effect` block at the bottom of the `<script>` that reacts to motion changes:
@@ -785,6 +781,7 @@ Replace with (adds a new `$effect` that mirrors the selected container's tempera
 
 Run: `npm run format && npm run check && npm run test:unit -- --run && npm run build`
 Expected:
+
 - format: writes/leaves files clean
 - check: `0 ERRORS 0 WARNINGS`
 - unit: all existing tests plus the new heating-plate-logic ones pass
@@ -809,6 +806,7 @@ git commit -m "visual lab: 3D heating plate with intensity buttons + temperature
 
 Run: `npm run check && npm run lint && npm run test:unit -- --run && npm run build && npm run test:e2e`
 Expected:
+
 - check: 0 errors, 0 warnings
 - lint: prettier clean + eslint clean
 - unit: 154 tests pass (144 from 6b3 + 10 new heating-plate-logic tests across 4 describe blocks)
