@@ -9,9 +9,10 @@
 //   - задняя стена-градиент
 //   - посуда (стакан/колба/пробирка/тигель/чашка) — LatheGeometry из профилей glassware-profiles
 //   - бутылки реактивов на заднем ряду стола (этикетки с формулой)
-//   - Raycaster для клика по контейнерам/бутылкам — состояние держит lab-store через колбэки
+//   - нагревательная плитка (heating-plate.ts) с панелью «НАГРЕВ» и raycaster-кнопками интенсивности
+//   - Raycaster для клика по контейнерам/бутылкам/кнопкам плитки — состояние держит lab-store через колбэки
 //
-// Производительность: ≤20 mesh-ей, ≤4k полигонов суммарно — спокойно ≥60 FPS на iGPU.
+// Производительность: ≤30 mesh-ей, ≤4k полигонов суммарно — спокойно ≥60 FPS на iGPU.
 // Для слабых устройств (reducedQuality) ставим pixelRatio=1 и режем сегменты.
 
 import * as THREE from 'three';
@@ -19,6 +20,8 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import type { Container, ContainerKind } from '../../data/types';
 import { findSubstance } from '../../data/substances';
 import { glasswareProfile, liquidFillHeight, liquidRadius } from './glassware-profiles';
+import { KIND_HEATING_BUTTON, makeHeatingPlate, type HeatingPlateHandle } from './heating-plate';
+import type { HeatingIntensity } from './heating-plate-logic';
 
 export interface BottleSpec {
 	substanceId: string;
@@ -35,6 +38,8 @@ export interface MountLabSceneOptions {
 	onContainerClick?: (containerId: string) => void;
 	/** Клик по бутылке реактива. */
 	onBottleClick?: (substanceId: string) => void;
+	/** Клик по кнопке нагревательной плитки. Сцена сама обновляет визуал; решение о heat/cool — у вызывающего. */
+	onHeatingButtonClick?: (intensity: HeatingIntensity) => void;
 }
 
 export interface LabSceneHandle {
@@ -42,6 +47,7 @@ export interface LabSceneHandle {
 	setContainers(containers: readonly Container[]): void;
 	setSelectedContainer(id: string | null): void;
 	setBottles(bottles: readonly BottleSpec[]): void;
+	setHeatingPlateDisplay(kelvin: number | null): void;
 	dispose(): void;
 }
 
@@ -113,6 +119,12 @@ export function mountLabScene(
 	const containerMeshes = new Map<string, THREE.Object3D>();
 	const bottleMeshes = new Map<string, THREE.Object3D>();
 	const clickableObjects: THREE.Object3D[] = [];
+
+	// Нагревательная плитка — одна на сцену, справа от ряда контейнеров.
+	const heatingPlate: HeatingPlateHandle = makeHeatingPlate({ reducedQuality });
+	heatingPlate.group.position.set(1.55, 0.005, 0.5);
+	scene.add(heatingPlate.group);
+	clickableObjects.push(heatingPlate.group);
 
 	rebuildContainers(opts.containers);
 	rebuildBottles(opts.bottles);
@@ -187,6 +199,14 @@ export function mountLabScene(
 			opts.onBottleClick?.(target.userData.substanceId as string);
 		} else if (target.userData.kind === KIND_CONTAINER && target.userData.containerId) {
 			opts.onContainerClick?.(target.userData.containerId as string);
+		} else if (
+			target.userData.kind === KIND_HEATING_BUTTON &&
+			typeof target.userData.intensity === 'number'
+		) {
+			const intensity = target.userData.intensity as HeatingIntensity;
+			heatingPlate.setIntensity(intensity);
+			if (!motionOn) renderer.render(scene, camera);
+			opts.onHeatingButtonClick?.(intensity);
 		}
 	}
 
@@ -290,6 +310,10 @@ export function mountLabScene(
 			selectedContainerId = id;
 			applySelectionHighlight();
 		},
+		setHeatingPlateDisplay(kelvin) {
+			heatingPlate.setDisplayTemp(kelvin);
+			if (!motionOn) renderer.render(scene, camera);
+		},
 		dispose() {
 			stopLoop();
 			canvas.removeEventListener('pointerdown', onPointerDown);
@@ -301,6 +325,7 @@ export function mountLabScene(
 			containerMeshes.clear();
 			for (const mesh of bottleMeshes.values()) disposeObject(mesh);
 			bottleMeshes.clear();
+			heatingPlate.dispose();
 			disposeObject(tableGroup);
 			disposeObject(backWall);
 			renderer.dispose();
