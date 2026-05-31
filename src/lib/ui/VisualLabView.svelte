@@ -15,6 +15,11 @@
 		removeContainer,
 		setSelectedContainerId
 	} from '$lib/lab';
+	import {
+		isHeatingAction,
+		targetTemperatureFor,
+		type HeatingIntensity
+	} from '$lib/render3d/heating-plate-logic';
 	import { t } from '$lib/i18n';
 
 	// Курируемый набор «всегда видимых» реактивов в 3D — самые ходовые из инвентаря.
@@ -75,6 +80,17 @@
 						const target = getSelectedContainerId();
 						if (!target) return; // молча игнорируем — UX-подсказка через рамку под выбранную колбу
 						addSubstance(target, substanceId, 1);
+					},
+					onHeatingButtonClick: (intensity: HeatingIntensity) => {
+						const cid = getSelectedContainerId();
+						if (!cid) return;
+						const exp = getExperiment();
+						const c = exp.containers.find((x) => x.id === cid);
+						if (!c) return;
+						const action = isHeatingAction(intensity, c.temperature);
+						if (action === 'noop') return;
+						const delta = targetTemperatureFor(intensity) - c.temperature;
+						heat(cid, delta);
 					}
 				});
 				sceneHandle = local;
@@ -99,6 +115,12 @@
 	});
 	$effect(() => {
 		if (sceneHandle) sceneHandle.setMotion(getMotionEnabled());
+	});
+
+	$effect(() => {
+		if (!sceneHandle) return;
+		const c = selectedContainer;
+		sceneHandle.setHeatingPlateDisplay(c ? c.temperature : null);
 	});
 </script>
 
