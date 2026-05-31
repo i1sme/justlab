@@ -20,6 +20,9 @@ export const INTENSITY_TARGETS: Readonly<Record<HeatingIntensity, number>> = {
 	3: 1100
 };
 
+/** Все уровни интенсивности в порядке возрастания — удобно для итерации в render-коде и тестах. */
+export const LEVELS: readonly HeatingIntensity[] = [0, 1, 2, 3];
+
 /** Минимальный зазор (K) между текущей и целевой, при котором ещё имеет смысл диспетчить heat/cool. */
 const ACTION_EPSILON_K = 1;
 

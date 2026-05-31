@@ -1,13 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
 	INTENSITY_TARGETS,
+	LEVELS,
 	targetTemperatureFor,
 	isHeatingAction,
 	glowOpacityFor,
 	type HeatingIntensity
 } from './heating-plate-logic';
-
-const LEVELS: HeatingIntensity[] = [0, 1, 2, 3];
 
 describe('INTENSITY_TARGETS', () => {
 	it('OFF возвращает к комнатной температуре 298 K', () => {
@@ -22,10 +21,10 @@ describe('INTENSITY_TARGETS', () => {
 		}
 	});
 
-	it('пороги покрывают школьные сценарии (мягкий нагрев / разложения / горение)', () => {
-		expect(INTENSITY_TARGETS[1]).toBeGreaterThanOrEqual(350);
-		expect(INTENSITY_TARGETS[2]).toBeGreaterThanOrEqual(500);
-		expect(INTENSITY_TARGETS[3]).toBeGreaterThanOrEqual(1000);
+	it('точные значения порогов (контракт для калькуляций)', () => {
+		expect(INTENSITY_TARGETS[1]).toBe(400);
+		expect(INTENSITY_TARGETS[2]).toBe(700);
+		expect(INTENSITY_TARGETS[3]).toBe(1100);
 	});
 });
 
