@@ -103,7 +103,7 @@ export function makeHeatingPlate(opts: MakeHeatingPlateOptions = {}): HeatingPla
 	display.name = 'plateDisplay';
 	group.add(display);
 
-	// Лейбл "НАГРЕВ" — атмосферный, баковый в текстуру (см. spec §4 i18n note).
+	// Лейбл "НАГРЕВ" — атмосферный, запечённый в текстуру (см. spec §4 i18n note).
 	const heatLabelTex = makeHeatLabelTexture(reducedQuality);
 	const heatLabelMat = new THREE.MeshBasicMaterial({ map: heatLabelTex, transparent: true });
 	const heatLabelGeo = new THREE.PlaneGeometry(DISPLAY_W, DISPLAY_H * 0.45);

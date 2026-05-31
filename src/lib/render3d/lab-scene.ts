@@ -9,9 +9,10 @@
 //   - задняя стена-градиент
 //   - посуда (стакан/колба/пробирка/тигель/чашка) — LatheGeometry из профилей glassware-profiles
 //   - бутылки реактивов на заднем ряду стола (этикетки с формулой)
-//   - Raycaster для клика по контейнерам/бутылкам — состояние держит lab-store через колбэки
+//   - нагревательная плитка (heating-plate.ts) с панелью «НАГРЕВ» и raycaster-кнопками интенсивности
+//   - Raycaster для клика по контейнерам/бутылкам/кнопкам плитки — состояние держит lab-store через колбэки
 //
-// Производительность: ≤20 mesh-ей, ≤4k полигонов суммарно — спокойно ≥60 FPS на iGPU.
+// Производительность: ≤30 mesh-ей, ≤4k полигонов суммарно — спокойно ≥60 FPS на iGPU.
 // Для слабых устройств (reducedQuality) ставим pixelRatio=1 и режем сегменты.
 
 import * as THREE from 'three';
@@ -121,7 +122,7 @@ export function mountLabScene(
 
 	// Нагревательная плитка — одна на сцену, справа от ряда контейнеров.
 	const heatingPlate: HeatingPlateHandle = makeHeatingPlate({ reducedQuality });
-	heatingPlate.group.position.set(1.3, 0.005, 0.3);
+	heatingPlate.group.position.set(1.55, 0.005, 0.5);
 	scene.add(heatingPlate.group);
 	clickableObjects.push(heatingPlate.group);
 
