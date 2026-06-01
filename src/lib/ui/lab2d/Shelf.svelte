@@ -20,14 +20,13 @@
 	}
 </script>
 
-<div class="shelf" role="listbox" aria-label={t('lab.containers')}>
+<div class="shelf" role="group" aria-label={t('lab.containers')}>
 	{#each containers as c (c.id)}
 		<button
 			type="button"
 			class="shelf-item"
 			class:shelf-item--selected={selectedId === c.id}
-			role="option"
-			aria-selected={selectedId === c.id}
+			aria-pressed={selectedId === c.id}
 			title={`${t(`lab.containerKind.${c.kind}`)} · ${c.id}`}
 			onclick={() => onSelect(c.id)}
 		>
