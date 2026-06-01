@@ -6,6 +6,7 @@ import {
 	interiorRadiusAt,
 	liquidFillHeight,
 	liquidRadius,
+	glasswareSilhouette,
 	WALL_THICKNESS
 } from './glassware-profiles';
 import type { ContainerKind } from '../../data/types';
@@ -118,5 +119,43 @@ describe('liquidRadius', () => {
 		expect(liquidRadius('beaker', liquidFillHeight('beaker', 0.5))).toBeCloseTo(0.168, 3);
 		// Пробирка — дно поднимается от оси → безопасный радиус схлопывается в 0 (клампится в рендере).
 		expect(liquidRadius('test-tube', liquidFillHeight('test-tube', 1))).toBe(0);
+	});
+});
+
+describe('glasswareSilhouette', () => {
+	it('возвращает закрытый SVG-путь, начинающийся с M и заканчивающийся Z', () => {
+		for (const kind of KINDS) {
+			const { path } = glasswareSilhouette(kind, 600);
+			expect(path.startsWith('M ')).toBe(true);
+			expect(path.trim().endsWith('Z')).toBe(true);
+			expect(path.length).toBeGreaterThan(10);
+		}
+	});
+
+	it('ширина = 2 × максимальный радиус × pxPerUnit', () => {
+		// beaker: maxR = 0.19 → width = 2*0.19*600 = 228
+		const { widthPx } = glasswareSilhouette('beaker', 600);
+		expect(widthPx).toBeCloseTo(228, 1);
+	});
+
+	it('высота = полная высота профиля × pxPerUnit', () => {
+		// test-tube: height units = 0.46 → 0.46*600 = 276
+		const { heightPx } = glasswareSilhouette('test-tube', 600);
+		expect(heightPx).toBeCloseTo(0.46 * 600, 1);
+	});
+
+	it('путь симметричен: содержит как положительные, так и отрицательные смещения от центра', () => {
+		const { path, widthPx } = glasswareSilhouette('flask', 600);
+		const cx = widthPx / 2;
+		const xs = [...path.matchAll(/[ML] (-?\d+(?:\.\d+)?) /g)].map((m) => Number(m[1]));
+		expect(xs.some((x) => x > cx + 1)).toBe(true);
+		expect(xs.some((x) => x < cx - 1)).toBe(true);
+	});
+
+	it('масштаб линеен по pxPerUnit', () => {
+		const a = glasswareSilhouette('crucible', 300);
+		const b = glasswareSilhouette('crucible', 600);
+		expect(b.widthPx).toBeCloseTo(a.widthPx * 2, 3);
+		expect(b.heightPx).toBeCloseTo(a.heightPx * 2, 3);
 	});
 });

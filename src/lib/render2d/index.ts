@@ -1,3 +1,3 @@
-// render2d/ — Canvas/SVG для структурных формул через OpenChemLib-JS.
-// Fallback для устройств без WebGL2 / preset 'low'.
+// render2d/ — 2.5D-рендер лаборатории (Canvas/SVG) + чистые модули геометрии посуды и
+// логики приборов. Также 2D-структурные формулы через OpenChemLib-JS.
 export {};
