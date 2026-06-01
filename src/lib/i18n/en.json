@@ -120,6 +120,10 @@
 		"temperature": "Temperature",
 		"heatStep": "+25 K",
 		"coolStep": "−25 K",
+		"heater": {
+			"label": "НАГРЕВ",
+			"levelPrefix": "Heating level"
+		},
 		"resetTemp": "Room temp",
 		"containerKind": {
 			"test-tube": "Test tube",
