@@ -7,6 +7,7 @@
 	import { findSubstance } from '../../../data/substances';
 	import {
 		glasswareSilhouette,
+		glasswareProfile,
 		glasswareHeight,
 		liquidFillHeight
 	} from '$lib/render2d/glassware-profiles';
@@ -34,10 +35,12 @@
 		return sub?.phases[top.phase]?.color ?? '#a8c8e8';
 	});
 
-	// Ширина горлышка (для ободка-эллипса открытого верха) = ширина силуэта на самом верхнем уровне.
-	// Берём радиус последней точки профиля через silo.widthPx как грубую оценку верхней кромки:
-	// для открытых сосудов рисуем эллипс, чтобы не читалось как закрытая банка.
-	const rimRx = $derived(silo.widthPx / 2);
+	// Радиус устья (верхнего отверстия) = радиус последней точки профиля × pxPerUnit.
+	// Именно устье, а не максимальный радиус сосуда — иначе у колбы ободок «вылезет» за узкое горло.
+	const rimRx = $derived.by(() => {
+		const pts = glasswareProfile(container.kind);
+		return pts[pts.length - 1].r * pxPerUnit;
+	});
 </script>
 
 <svg
@@ -80,7 +83,7 @@
 	<ellipse
 		cx={silo.widthPx / 2}
 		cy="1.5"
-		rx={Math.max(2, rimRx - 1)}
+		rx={Math.max(2, rimRx)}
 		ry="3"
 		fill="none"
 		stroke="var(--lab-glass-stroke, #a8b8c3)"
