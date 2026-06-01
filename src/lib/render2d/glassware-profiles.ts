@@ -133,6 +133,16 @@ export function liquidRadius(kind: ContainerKind, fillH: number): number {
 	return Math.max(0, minR);
 }
 
+/** Габариты сосуда в юнитах профиля: ширина (2×макс.радиус) и высота. Для вписывания в bounding box. */
+export function glasswareUnitSize(kind: ContainerKind): {
+	widthUnits: number;
+	heightUnits: number;
+} {
+	const pts = glasswareProfile(kind);
+	const maxR = pts.reduce((m, p) => Math.max(m, p.r), 0);
+	return { widthUnits: maxR * 2, heightUnits: glasswareHeight(kind) };
+}
+
 /** Силуэт сосуда в SVG: симметричный замкнутый путь + размер в пикселях. */
 export interface GlasswareSilhouette {
 	/** SVG-атрибут `d`: контур сосуда (право-низ → верх → лево-низ → Z). */
