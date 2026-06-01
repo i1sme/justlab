@@ -13,16 +13,19 @@
 ## File structure
 
 **Relocated (R1 Task 1, `git mv`, content unchanged except Task 2's addition):**
+
 - `src/lib/render3d/glassware-profiles.ts` → `src/lib/render2d/glassware-profiles.ts`
 - `src/lib/render3d/glassware-profiles.test.ts` → `src/lib/render2d/glassware-profiles.test.ts`
 - `src/lib/render3d/heating-plate-logic.ts` → `src/lib/render2d/heating-plate-logic.ts`
 - `src/lib/render3d/heating-plate-logic.test.ts` → `src/lib/render2d/heating-plate-logic.test.ts`
 
 **Deleted (R1 Task 1):**
+
 - `src/lib/render3d/lab-scene.ts`
 - `src/lib/render3d/heating-plate.ts`
 
 **Created:**
+
 - `src/lib/ui/lab2d/Glassware.svelte` — one SVG vessel + liquid. Responsibility: draw a single container.
 - `src/lib/ui/lab2d/HeatingPlatePanel.svelte` — flat apparatus panel. Responsibility: temperature device UI.
 - `src/lib/ui/lab2d/Shelf.svelte` — horizontal strip of selectable container miniatures.
@@ -30,9 +33,11 @@
 - `src/lib/ui/lab2d/Workspace.svelte` — selected container large + apparatus + per-container controls.
 
 **Rewritten:**
+
 - `src/lib/ui/VisualLabView.svelte` — composes the above; owns the pastel palette root; wires the lab store.
 
 **Modified:**
+
 - `src/lib/i18n/ru.json`, `src/lib/i18n/en.json` — add `lab.visual.empty` and `lab.visual.shelf` keys.
 
 No reducer / store / domain-type changes. The existing `ContainerToolbar` (add/remove containers) stays above the view in `/lab/+page.svelte` and works for both modes — the shelf is **selection-only**.
@@ -44,6 +49,7 @@ No reducer / store / domain-type changes. The existing `ContainerToolbar` (add/r
 This is the cutover task. After it, the build is green, the visual lab shows a temporary placeholder, the pure modules live in `render2d/` with their tests passing, and nothing imports Three.js for the lab. Subsequent tasks build the real UI on top.
 
 **Files:**
+
 - Move: 4 files (see above)
 - Delete: `src/lib/render3d/lab-scene.ts`, `src/lib/render3d/heating-plate.ts`
 - Rewrite: `src/lib/ui/VisualLabView.svelte`
@@ -51,6 +57,7 @@ This is the cutover task. After it, the build is green, the visual lab shows a t
 - [ ] **Step 1: Relocate the four pure-module files with git mv**
 
 Run:
+
 ```bash
 git mv src/lib/render3d/glassware-profiles.ts src/lib/render2d/glassware-profiles.ts
 git mv src/lib/render3d/glassware-profiles.test.ts src/lib/render2d/glassware-profiles.test.ts
@@ -63,6 +70,7 @@ The test files import the modules with relative paths (`./glassware-profiles`, `
 - [ ] **Step 2: Delete the two Three.js lab modules**
 
 Run:
+
 ```bash
 git rm src/lib/render3d/lab-scene.ts src/lib/render3d/heating-plate.ts
 ```
@@ -140,6 +148,7 @@ Insert:
 
 Run: `npm run format && npm run check && npm run lint && npm run test:unit -- --run && npm run build && npm run test:e2e`
 Expected:
+
 - check: `0 ERRORS 0 WARNINGS` (confirms no dangling imports of the deleted modules)
 - lint: clean
 - unit: all pass — the relocated `glassware-profiles.test.ts` and `heating-plate-logic.test.ts` run from their new path (test count unchanged from main)
@@ -147,12 +156,15 @@ Expected:
 - e2e: 11 passed (visual mode isn't exercised by e2e; the placeholder is inert)
 
 If `check` reports an unused import or missing module, confirm Step 1–3 removed every reference to `$lib/render3d/lab-scene`, `$lib/render3d/heating-plate`, `$lib/render3d/glassware-profiles`, and `$lib/render3d/heating-plate-logic`. Search:
+
 ```bash
 grep -rn "render3d/lab-scene\|render3d/heating-plate\|render3d/glassware-profiles\|render3d/heating-plate-logic" src/
 ```
+
 This must return nothing.
 
 Commit:
+
 ```bash
 git add -A
 git commit -m "visual lab v2: retire 3D scene, relocate pure modules to render2d, placeholder view"
@@ -165,6 +177,7 @@ git commit -m "visual lab v2: retire 3D scene, relocate pure modules to render2d
 Add one pure function to the relocated `glassware-profiles.ts` that converts a vessel profile into a symmetric closed SVG path in pixel space, plus its bounding size. This is the geometric core of 2.5D glassware rendering.
 
 **Files:**
+
 - Modify: `src/lib/render2d/glassware-profiles.ts`
 - Test: `src/lib/render2d/glassware-profiles.test.ts`
 
@@ -280,6 +293,7 @@ git commit -m "glassware: pure SVG silhouette generator for 2.5D rendering"
 Render one container as an SVG vessel with a clip-masked liquid fill in the content color.
 
 **Files:**
+
 - Create: `src/lib/ui/lab2d/Glassware.svelte`
 
 - [ ] **Step 1: Write the component**
@@ -388,6 +402,7 @@ git commit -m "visual lab v2: Glassware SVG component (vessel + clipped liquid)"
 A flat apparatus panel: НАГРЕВ label, a large digital display reading the selected container's temperature, and four big buttons (O / I / II / III). It does not dispatch actions itself — it calls an `onIntensity` callback. The active button is **derived from the container's current temperature** (so it's always truthful and never goes stale across container switches).
 
 **Files:**
+
 - Create: `src/lib/ui/lab2d/HeatingPlatePanel.svelte`
 
 - [ ] **Step 1: Write the component**
@@ -562,6 +577,7 @@ git commit -m "visual lab v2: HeatingPlatePanel (flat apparatus, derived active 
 The shelf is a horizontal strip of selectable container miniatures (reusing `Glassware` small). The bottle panel is a vertical list of curated reagents; clicking one calls `onPick`.
 
 **Files:**
+
 - Create: `src/lib/ui/lab2d/Shelf.svelte`
 - Create: `src/lib/ui/lab2d/BottlePanel.svelte`
 
@@ -693,7 +709,10 @@ Create `src/lib/ui/lab2d/BottlePanel.svelte`:
 						onclick={() => onPick(id)}
 						title={sub.names[locale]}
 					>
-						<span class="bottle-cap" style:background-color={sub.phases[sub.defaultPhase]?.color ?? '#cbd5e1'}></span>
+						<span
+							class="bottle-cap"
+							style:background-color={sub.phases[sub.defaultPhase]?.color ?? '#cbd5e1'}
+						></span>
 						<span class="bottle-name">{sub.names[locale]}</span>
 						<span class="bottle-formula">{sub.formula}</span>
 					</button>
@@ -798,6 +817,7 @@ git commit -m "visual lab v2: Shelf (selectable miniatures) + BottlePanel (click
 `Workspace` shows the selected container large with per-container controls (−/+/empty/remove) and the heating panel. `VisualLabView` composes shelf + workspace + bottle panel, owns the pastel palette root, and wires everything to the lab store. This replaces the Task 1 placeholder.
 
 **Files:**
+
 - Create: `src/lib/ui/lab2d/Workspace.svelte`
 - Rewrite: `src/lib/ui/VisualLabView.svelte`
 
@@ -832,8 +852,18 @@ Create `src/lib/ui/lab2d/Workspace.svelte`:
 
 		<div class="ws-controls">
 			<div class="ws-temp-controls" role="group" aria-label={t('lab.temperature')}>
-				<button type="button" class="ws-btn" aria-label={t('lab.coolStep')} onclick={() => onHeat(-25)}>−</button>
-				<button type="button" class="ws-btn" aria-label={t('lab.heatStep')} onclick={() => onHeat(25)}>+</button>
+				<button
+					type="button"
+					class="ws-btn"
+					aria-label={t('lab.coolStep')}
+					onclick={() => onHeat(-25)}>−</button
+				>
+				<button
+					type="button"
+					class="ws-btn"
+					aria-label={t('lab.heatStep')}
+					onclick={() => onHeat(25)}>+</button
+				>
 				<button
 					type="button"
 					class="ws-btn ws-btn--empty"
@@ -843,7 +873,12 @@ Create `src/lib/ui/lab2d/Workspace.svelte`:
 				>
 					⌫
 				</button>
-				<button type="button" class="ws-btn ws-btn--remove" aria-label={t('lab.removeContainer')} onclick={onRemove}>✕</button>
+				<button
+					type="button"
+					class="ws-btn ws-btn--remove"
+					aria-label={t('lab.removeContainer')}
+					onclick={onRemove}>✕</button
+				>
 			</div>
 
 			<HeatingPlatePanel {container} {onIntensity} />
@@ -1086,6 +1121,7 @@ git commit -m "visual lab v2: Workspace + composed VisualLabView (shelf+workspac
 
 Run: `npm run check && npm run lint && npm run test:unit -- --run && npm run build && npm run test:e2e`
 Expected:
+
 - check: 0 errors, 0 warnings
 - lint: prettier + eslint clean
 - unit: all pass (existing + the 5 new `glasswareSilhouette` tests; relocated tests run from `render2d/`)
@@ -1095,14 +1131,17 @@ Expected:
 - [ ] **Step 2: Confirm no orphaned Three.js lab references**
 
 Run:
+
 ```bash
 grep -rn "lab-scene\|render3d/heating-plate\|mountLabScene\|makeHeatingPlate" src/
 ```
+
 Expected: nothing (the atom-scene / molecule-scene in `render3d/` are unrelated and must NOT appear in this grep since the pattern is lab-specific).
 
 - [ ] **Step 3: Manual visual smoke (human-only)**
 
 Run `npm run dev`, open `/lab`, switch to the Visual toggle (🧪). Confirm:
+
 - A shelf of 4 container miniatures appears on top; clicking one selects it (powder-blue border).
 - The selected container renders large in the workspace as a recognizable vessel silhouette (beaker vs flask vs test-tube vs crucible are visually distinct).
 - The bottle panel lists 7 reagents with color caps + formulae; buttons are disabled until a container is selected.

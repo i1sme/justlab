@@ -173,6 +173,7 @@
 			"visual": "Visual"
 		},
 		"visual": {
+			"rebuilding": "The visual lab is being rebuilt — a new interface is coming soon.",
 			"canvasLabel": "3D lab scene",
 			"dragHint": "Drag to rotate the scene",
 			"selectContainerHint": "Click a flask to select it. Drag the scene to rotate.",

@@ -37,7 +37,7 @@ The reference image the user sent earlier (Unity-quality 3D from `goskomplekt.ru
    - **Steam** — visible vapor above the liquid surface when boiling, and lighter wisps in 350–373 K range.
    - **Dissolution diffusion** — short-lived color spread when a soluble salt is added to a water-containing vessel (e.g. CuSO₄ → water gives a colored cloud that homogenizes over ~1.5 s).
    - **Precipitate settling** — for any container whose contents include a `solid` phase substance born from a precipitation reaction, render slow downward drift / accumulation at the floor.
-   These derive from container + environment state, not from one-shot reaction events. Captured in a pure function `deriveAmbientEffects(container, env): VisualEffect[]` and unit-tested.
+     These derive from container + environment state, not from one-shot reaction events. Captured in a pure function `deriveAmbientEffects(container, env): VisualEffect[]` and unit-tested.
 5. **Interaction model — click in MVP, drag in R4.** Bottles in the side panel are clickable; a clicked bottle animates a brief "drop" of its content into the selected container. Drag-and-drop and pour animations are R4 polish.
 6. **Formal mode stays.** The `labView` toggle remains; Formal (cards) serves university-mode users who want data over visualization. Only Visual is rebuilt.
 
@@ -53,7 +53,7 @@ The reference image the user sent earlier (Unity-quality 3D from `goskomplekt.ru
 - **Pure modules from 6b3 / 6b4:**
   - `render3d/glassware-profiles.ts` — vessel profile math (still useful — defines silhouettes for SVG rendering).
   - `render3d/heating-plate-logic.ts` — intensity → target T mapping.
-  These get **relocated** out of `render3d/` (since they're no longer 3D-specific) into `src/lib/render2d/` alongside the new render layer. The relocation happens in R1's same commits that replace the callers, so no broken imports.
+    These get **relocated** out of `render3d/` (since they're no longer 3D-specific) into `src/lib/render2d/` alongside the new render layer. The relocation happens in R1's same commits that replace the callers, so no broken imports.
 - **Other render layers** — `render3d/atom-scene.ts`, `render3d/molecule-scene.ts` keep working (periodic table 3D atom, molecule viewer) — not touched.
 - **Formal mode** — `ui/ContainerCard.svelte`, `ui/ContainerToolbar.svelte`, `ui/ReactionInfo.svelte`, `ui/Inventory.svelte`, `ui/QuestPanel.svelte`, etc. — untouched.
 
@@ -84,19 +84,19 @@ The retirement is a **clean replace**, not "deprecate alongside". The product sh
 
 ### 3.5 Visual identity (starter pastel palette)
 
-| Layer | Color | Use |
-|---|---|---|
-| Table surface | `#f5efe6` (warm cream) | Workspace background |
-| Wall / room | `#e7eef3` (pale cool gray) | Ambient backdrop |
-| Glass outline | `#a8b8c3` (soft slate) | Vessel strokes |
-| Glass fill | `#dceaf2` 30% opacity | Translucent vessel body |
-| Apparatus chassis | `#5b6b78` (muted slate) | Heating plate base etc. |
-| Apparatus accent | `#c4a484` (warm tan) | Wood-of-bench warmth |
-| Hot ambient | `#e8a87c` (peach) | Glow / hot indicator — not red |
-| Cold ambient | `#a8dadc` (mint) | Frost / cooling |
-| Text primary | `#3a3f4a` (rich gray) | Readable, not pure black |
-| Focus highlight | `#bfd7ed` (powder blue) | Selection state |
-| Substance colors | **existing `phases[].color`** | Scientifically accurate, untouched |
+| Layer             | Color                         | Use                                |
+| ----------------- | ----------------------------- | ---------------------------------- |
+| Table surface     | `#f5efe6` (warm cream)        | Workspace background               |
+| Wall / room       | `#e7eef3` (pale cool gray)    | Ambient backdrop                   |
+| Glass outline     | `#a8b8c3` (soft slate)        | Vessel strokes                     |
+| Glass fill        | `#dceaf2` 30% opacity         | Translucent vessel body            |
+| Apparatus chassis | `#5b6b78` (muted slate)       | Heating plate base etc.            |
+| Apparatus accent  | `#c4a484` (warm tan)          | Wood-of-bench warmth               |
+| Hot ambient       | `#e8a87c` (peach)             | Glow / hot indicator — not red     |
+| Cold ambient      | `#a8dadc` (mint)              | Frost / cooling                    |
+| Text primary      | `#3a3f4a` (rich gray)         | Readable, not pure black           |
+| Focus highlight   | `#bfd7ed` (powder blue)       | Selection state                    |
+| Substance colors  | **existing `phases[].color`** | Scientifically accurate, untouched |
 
 This palette is a starting point; concrete values get tuned in R1's manual smoke. The rule is: **pastel is the chrome, science is the content.**
 
@@ -108,11 +108,11 @@ A new pure module `src/lib/render2d/ambient-effects.ts` exports:
 
 ```ts
 export function deriveAmbientEffects(
-  container: Container,
-  env: Environment,
-  /** Wallclock-ish ms since container last changed, for transient effects like dissolution. */
-  ageMs: number
-): VisualEffect[]
+	container: Container,
+	env: Environment,
+	/** Wallclock-ish ms since container last changed, for transient effects like dissolution. */
+	ageMs: number
+): VisualEffect[];
 ```
 
 Returns zero or more `VisualEffect` descriptors derived from state. Rules (v1):
