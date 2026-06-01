@@ -1,3 +1,9 @@
+<script module lang="ts">
+	// Счётчик инстансов для уникального clipPath id (один и тот же контейнер может
+	// рендериться дважды: миниатюра на полке + крупно в рабочей зоне).
+	let _seq = 0;
+</script>
+
 <script lang="ts">
 	// Один сосуд как SVG-силуэт + залитая жидкость (clip-mask по контуру).
 	// Цвет жидкости — научно достоверный, из Substance.phases[phase].color.
@@ -5,6 +11,7 @@
 
 	import type { Container } from '../../../data/types';
 	import { findSubstance } from '../../../data/substances';
+	import { t } from '$lib/i18n';
 	import {
 		glasswareSilhouette,
 		glasswareProfile,
@@ -19,10 +26,12 @@
 	};
 	let { container, heightPx = 280 }: Props = $props();
 
+	const _uid = ++_seq;
+
 	// pxPerUnit подбирается так, чтобы сосуд занял заданную высоту.
 	const pxPerUnit = $derived(heightPx / glasswareHeight(container.kind));
 	const silo = $derived(glasswareSilhouette(container.kind, pxPerUnit));
-	const clipId = $derived(`glass-clip-${container.id}`);
+	const clipId = $derived(`glass-clip-${container.id}-${_uid}`);
 
 	const total = $derived(container.contents.reduce((s, x) => s + x.amount, 0));
 	const fillRatio = $derived(Math.min(1, total / 4));
@@ -41,6 +50,9 @@
 		const pts = glasswareProfile(container.kind);
 		return pts[pts.length - 1].r * pxPerUnit;
 	});
+
+	// Вертикальный радиус устья — доля от горизонтального: даёт эллипс-«отверстие» в 2.5D.
+	const rimRy = $derived(Math.max(1.5, rimRx * 0.18));
 </script>
 
 <svg
@@ -49,7 +61,7 @@
 	height={silo.heightPx}
 	viewBox="0 0 {silo.widthPx} {silo.heightPx}"
 	role="img"
-	aria-label={container.kind}
+	aria-label={t(`lab.containerKind.${container.kind}`)}
 >
 	<defs>
 		<clipPath id={clipId}>
@@ -82,9 +94,9 @@
 	<!-- Ободок открытого верха: тонкий эллипс, чтобы сосуд не читался как закрытая банка. -->
 	<ellipse
 		cx={silo.widthPx / 2}
-		cy="1.5"
+		cy={rimRy}
 		rx={Math.max(2, rimRx)}
-		ry="3"
+		ry={rimRy}
 		fill="none"
 		stroke="var(--lab-glass-stroke, #a8b8c3)"
 		stroke-width="2"
