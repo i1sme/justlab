@@ -18,21 +18,24 @@
 	import {
 		glasswareSilhouette,
 		glasswareProfile,
-		glasswareHeight,
+		glasswareUnitSize,
 		liquidFillHeight
 	} from '$lib/render2d/glassware-profiles';
 
 	type Props = {
 		container: Container;
-		/** Высота рендера в пикселях; ширина выводится из пропорций сосуда. */
-		heightPx?: number;
+		/** Ребро bounding box в пикселях; сосуд вписывается в квадрат sizePx×sizePx с сохранением пропорций. */
+		sizePx?: number;
 	};
-	let { container, heightPx = 280 }: Props = $props();
+	let { container, sizePx = 280 }: Props = $props();
 
 	const _uid = nextGlasswareUid();
 
-	// pxPerUnit подбирается так, чтобы сосуд занял заданную высоту.
-	const pxPerUnit = $derived(heightPx / glasswareHeight(container.kind));
+	// pxPerUnit подбирается так, чтобы сосуд вписался в bounding box sizePx×sizePx.
+	const pxPerUnit = $derived.by(() => {
+		const { widthUnits, heightUnits } = glasswareUnitSize(container.kind);
+		return sizePx / Math.max(widthUnits, heightUnits);
+	});
 	const silo = $derived(glasswareSilhouette(container.kind, pxPerUnit));
 	const clipId = $derived(`glass-clip-${container.id}-${_uid}`);
 

@@ -7,6 +7,7 @@ import {
 	liquidFillHeight,
 	liquidRadius,
 	glasswareSilhouette,
+	glasswareUnitSize,
 	WALL_THICKNESS
 } from './glassware-profiles';
 import type { ContainerKind } from '../../data/types';
@@ -157,5 +158,24 @@ describe('glasswareSilhouette', () => {
 		const b = glasswareSilhouette('crucible', 600);
 		expect(b.widthPx).toBeCloseTo(a.widthPx * 2, 3);
 		expect(b.heightPx).toBeCloseTo(a.heightPx * 2, 3);
+	});
+});
+
+describe('glasswareUnitSize', () => {
+	it('возвращает ширину (2×maxR) и высоту профиля в юнитах', () => {
+		// beaker: maxR=0.19 → width 0.38; height 0.34
+		const b = glasswareUnitSize('beaker');
+		expect(b.widthUnits).toBeCloseTo(0.38, 5);
+		expect(b.heightUnits).toBeCloseTo(0.34, 5);
+	});
+
+	it('петри — широкая и низкая (ширина >> высота)', () => {
+		const p = glasswareUnitSize('petri');
+		expect(p.widthUnits).toBeGreaterThan(p.heightUnits * 3);
+	});
+
+	it('пробирка — высокая и узкая (высота > ширины)', () => {
+		const t = glasswareUnitSize('test-tube');
+		expect(t.heightUnits).toBeGreaterThan(t.widthUnits);
 	});
 });

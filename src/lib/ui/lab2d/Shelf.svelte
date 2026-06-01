@@ -31,7 +31,7 @@
 			onclick={() => onSelect(c.id)}
 		>
 			<div class="shelf-mini">
-				<Glassware container={c} heightPx={64} />
+				<Glassware container={c} sizePx={60} />
 			</div>
 			<span class="shelf-dot" style:background-color={tempDot(c.temperature)}></span>
 		</button>

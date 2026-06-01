@@ -62,7 +62,7 @@
 		padding: 0.75rem;
 		border-radius: 0.75rem;
 		background: var(--lab-apparatus, #5b6b78);
-		min-width: 9rem;
+		width: 11rem;
 	}
 	.plate--disabled {
 		opacity: 0.6;
@@ -82,6 +82,8 @@
 		background: #14181d;
 		border-radius: 0.375rem;
 		padding: 0.4rem 0.5rem;
+		white-space: nowrap;
+		font-variant-numeric: tabular-nums;
 	}
 	.plate-buttons {
 		display: grid;

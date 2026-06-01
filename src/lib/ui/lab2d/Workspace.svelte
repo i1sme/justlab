@@ -19,7 +19,7 @@
 <div class="workspace">
 	{#if container}
 		<div class="ws-vessel">
-			<Glassware {container} heightPx={300} />
+			<Glassware {container} sizePx={300} />
 		</div>
 
 		<div class="ws-controls">
