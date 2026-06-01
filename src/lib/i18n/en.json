@@ -177,14 +177,8 @@
 			"visual": "Visual"
 		},
 		"visual": {
-			"rebuilding": "The visual lab is being rebuilt — a new interface is coming soon.",
 			"empty": "Pick a container from the shelf to start working.",
-			"shelf": "Container shelf",
-			"canvasLabel": "3D lab scene",
-			"dragHint": "Drag to rotate the scene",
-			"selectContainerHint": "Click a flask to select it. Drag the scene to rotate.",
-			"pourHint": "Click a bottle — its contents pour into the selected flask.",
-			"noWebGL": "Your browser doesn't support WebGL2. Switch to formal view — full functionality is there."
+			"shelf": "Container shelf"
 		}
 	},
 	"element": {
