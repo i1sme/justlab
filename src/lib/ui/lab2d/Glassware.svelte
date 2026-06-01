@@ -1,0 +1,97 @@
+<script lang="ts">
+	// Один сосуд как SVG-силуэт + залитая жидкость (clip-mask по контуру).
+	// Цвет жидкости — научно достоверный, из Substance.phases[phase].color.
+	// Чистая геометрия силуэта — в render2d/glassware-profiles.ts (покрыта тестами).
+
+	import type { Container } from '../../../data/types';
+	import { findSubstance } from '../../../data/substances';
+	import {
+		glasswareSilhouette,
+		glasswareHeight,
+		liquidFillHeight
+	} from '$lib/render2d/glassware-profiles';
+
+	type Props = {
+		container: Container;
+		/** Высота рендера в пикселях; ширина выводится из пропорций сосуда. */
+		heightPx?: number;
+	};
+	let { container, heightPx = 280 }: Props = $props();
+
+	// pxPerUnit подбирается так, чтобы сосуд занял заданную высоту.
+	const pxPerUnit = $derived(heightPx / glasswareHeight(container.kind));
+	const silo = $derived(glasswareSilhouette(container.kind, pxPerUnit));
+	const clipId = $derived(`glass-clip-${container.id}`);
+
+	const total = $derived(container.contents.reduce((s, x) => s + x.amount, 0));
+	const fillRatio = $derived(Math.min(1, total / 4));
+	const fillPx = $derived(liquidFillHeight(container.kind, fillRatio) * pxPerUnit);
+
+	const liquidColor = $derived.by(() => {
+		if (container.contents.length === 0) return null;
+		const top = container.contents[container.contents.length - 1];
+		const sub = findSubstance(top.substanceId);
+		return sub?.phases[top.phase]?.color ?? '#a8c8e8';
+	});
+
+	// Ширина горлышка (для ободка-эллипса открытого верха) = ширина силуэта на самом верхнем уровне.
+	// Берём радиус последней точки профиля через silo.widthPx как грубую оценку верхней кромки:
+	// для открытых сосудов рисуем эллипс, чтобы не читалось как закрытая банка.
+	const rimRx = $derived(silo.widthPx / 2);
+</script>
+
+<svg
+	class="glassware"
+	width={silo.widthPx}
+	height={silo.heightPx}
+	viewBox="0 0 {silo.widthPx} {silo.heightPx}"
+	role="img"
+	aria-label={container.kind}
+>
+	<defs>
+		<clipPath id={clipId}>
+			<path d={silo.path} />
+		</clipPath>
+	</defs>
+
+	<!-- Жидкость: прямоугольник снизу, обрезанный по контуру сосуда. -->
+	{#if liquidColor && fillPx > 0}
+		<rect
+			x="0"
+			y={silo.heightPx - fillPx}
+			width={silo.widthPx}
+			height={fillPx}
+			fill={liquidColor}
+			opacity="0.85"
+			clip-path="url(#{clipId})"
+		/>
+	{/if}
+
+	<!-- Стекло: тело сосуда (заливка + контур). -->
+	<path
+		d={silo.path}
+		fill="var(--lab-glass-fill, rgba(220,234,242,0.25))"
+		stroke="var(--lab-glass-stroke, #a8b8c3)"
+		stroke-width="2"
+		stroke-linejoin="round"
+	/>
+
+	<!-- Ободок открытого верха: тонкий эллипс, чтобы сосуд не читался как закрытая банка. -->
+	<ellipse
+		cx={silo.widthPx / 2}
+		cy="1.5"
+		rx={Math.max(2, rimRx - 1)}
+		ry="3"
+		fill="none"
+		stroke="var(--lab-glass-stroke, #a8b8c3)"
+		stroke-width="2"
+		opacity="0.85"
+	/>
+</svg>
+
+<style>
+	.glassware {
+		display: block;
+		overflow: visible;
+	}
+</style>
