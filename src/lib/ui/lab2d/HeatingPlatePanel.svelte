@@ -26,17 +26,17 @@
 		return LEVELS.find((l) => Math.abs(INTENSITY_TARGETS[l] - container.temperature) < 0.5) ?? null;
 	});
 
-	function tempText(): string {
+	const tempText = $derived.by(() => {
 		if (!container) return '—';
 		const k = Math.round(container.temperature);
 		const c = Math.round(container.temperature - 273.15);
 		return `${k} K · ${c} °C`;
-	}
+	});
 </script>
 
 <div class="plate" class:plate--disabled={!container}>
 	<div class="plate-label">{t('lab.heater.label')}</div>
-	<div class="plate-display" aria-live="polite">{tempText()}</div>
+	<div class="plate-display" aria-live="polite">{tempText}</div>
 	<div class="plate-buttons" role="group" aria-label={t('lab.heater.label')}>
 		{#each LEVELS as level (level)}
 			<button
