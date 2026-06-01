@@ -2,6 +2,9 @@
 	// Счётчик инстансов для уникального clipPath id (один и тот же контейнер может
 	// рендериться дважды: миниатюра на полке + крупно в рабочей зоне).
 	let _seq = 0;
+	function nextGlasswareUid(): number {
+		return ++_seq;
+	}
 </script>
 
 <script lang="ts">
@@ -26,7 +29,7 @@
 	};
 	let { container, heightPx = 280 }: Props = $props();
 
-	const _uid = ++_seq;
+	const _uid = nextGlasswareUid();
 
 	// pxPerUnit подбирается так, чтобы сосуд занял заданную высоту.
 	const pxPerUnit = $derived(heightPx / glasswareHeight(container.kind));
