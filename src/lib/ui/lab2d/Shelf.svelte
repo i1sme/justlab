@@ -20,7 +20,7 @@
 	}
 </script>
 
-<div class="shelf" role="group" aria-label={t('lab.containers')}>
+<div class="shelf" role="group" aria-label={t('lab.visual.shelf')}>
 	{#each containers as c (c.id)}
 		<button
 			type="button"
