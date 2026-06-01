@@ -1,11 +1,14 @@
 <script lang="ts">
-	// Визуальный режим лаборатории — Three.js сцена со столом, посудой и реактивами.
-	// Состояние читается из lab-store, клики из 3D пробрасываются обратно через колбэки —
-	// сцена остаётся «тупой» отрисовкой без своего state.
+	// Визуальный режим лаборатории (2.5D). Master-detail: полка сверху + рабочая зона снизу.
+	// Состояние — из $lib/lab. Компоненты «тупые»: рисуют + зовут колбэки.
+	// Палитра (пастель) задаётся CSS-переменными на корне и наследуется детьми.
+	// Цвета веществ при этом остаются научно достоверными (из Substance.phases[].color).
 
-	import type { BottleSpec, LabSceneHandle } from '$lib/render3d/lab-scene';
-	import { detectQuality, supportsWebGL2 } from '$lib/render3d/webgl-detect';
-	import { getMotionEnabled } from '$lib/settings';
+	import {
+		isHeatingAction,
+		targetTemperatureFor,
+		type HeatingIntensity
+	} from '$lib/render2d/heating-plate-logic';
 	import {
 		addSubstance,
 		emptyContainer,
@@ -15,341 +18,104 @@
 		removeContainer,
 		setSelectedContainerId
 	} from '$lib/lab';
-	import {
-		isHeatingAction,
-		targetTemperatureFor,
-		type HeatingIntensity
-	} from '$lib/render3d/heating-plate-logic';
-	import { t } from '$lib/i18n';
+	import Shelf from './lab2d/Shelf.svelte';
+	import Workspace from './lab2d/Workspace.svelte';
+	import BottlePanel from './lab2d/BottlePanel.svelte';
 
-	// Курируемый набор «всегда видимых» реактивов в 3D — самые ходовые из инвентаря.
-	// Полный список остаётся доступным через 2D-сайдбар (Inventory).
-	const VISIBLE_BOTTLES: readonly BottleSpec[] = [
-		{ substanceId: 'water' },
-		{ substanceId: 'hydrochloric-acid' },
-		{ substanceId: 'sodium-hydroxide' },
-		{ substanceId: 'copper-sulfate' },
-		{ substanceId: 'silver-nitrate' },
-		{ substanceId: 'sodium-chloride' },
-		{ substanceId: 'Zn' }
+	// Курируемый набор бутылок (как в прежней 3D-версии — ходовые реактивы).
+	const BOTTLE_IDS: readonly string[] = [
+		'water',
+		'hydrochloric-acid',
+		'sodium-hydroxide',
+		'copper-sulfate',
+		'silver-nitrate',
+		'sodium-chloride',
+		'Zn'
 	];
-
-	let canvasEl: HTMLCanvasElement | null = $state(null);
-	let loadError: string | null = $state(null);
-	let webglSupported = $state(true);
 
 	const experiment = $derived(getExperiment());
 	const selectedId = $derived(getSelectedContainerId());
-	const selectedContainer = $derived(experiment.containers.find((c) => c.id === selectedId));
+	const selected = $derived(experiment.containers.find((c) => c.id === selectedId) ?? null);
 
-	function fmtTemp(k: number): string {
-		const c = k - 273.15;
-		return `${Math.round(k)} K · ${Math.round(c)} °C`;
+	function selectContainer(id: string): void {
+		setSelectedContainerId(selectedId === id ? null : id);
 	}
 
-	let sceneHandle: LabSceneHandle | null = null;
+	function pickBottle(substanceId: string): void {
+		if (!selectedId) return;
+		addSubstance(selectedId, substanceId, 1);
+	}
 
-	$effect(() => {
-		if (typeof window === 'undefined') return;
-		webglSupported = supportsWebGL2();
-	});
-
-	$effect(() => {
-		if (!canvasEl || !webglSupported) return;
-		const target = canvasEl;
-		let cancelled = false;
-		let local: LabSceneHandle | null = null;
-		const quality = detectQuality();
-		const initialContainers = experiment.containers;
-		const initialSelected = selectedId;
-
-		(async () => {
-			try {
-				const mod = await import('$lib/render3d/lab-scene');
-				if (cancelled) return;
-				local = mod.mountLabScene(target, {
-					containers: initialContainers,
-					bottles: VISIBLE_BOTTLES,
-					selectedContainerId: initialSelected,
-					reducedQuality: quality === 'low',
-					motionEnabled: getMotionEnabled(),
-					onContainerClick: (id) => {
-						setSelectedContainerId(getSelectedContainerId() === id ? null : id);
-					},
-					onBottleClick: (substanceId) => {
-						const target = getSelectedContainerId();
-						if (!target) return; // молча игнорируем — UX-подсказка через рамку под выбранную колбу
-						addSubstance(target, substanceId, 1);
-					},
-					onHeatingButtonClick: (intensity: HeatingIntensity) => {
-						const cid = getSelectedContainerId();
-						if (!cid) return;
-						const exp = getExperiment();
-						const c = exp.containers.find((x) => x.id === cid);
-						if (!c) return;
-						const action = isHeatingAction(intensity, c.temperature);
-						if (action === 'noop') return;
-						const delta = targetTemperatureFor(intensity) - c.temperature;
-						heat(cid, delta);
-					}
-				});
-				sceneHandle = local;
-			} catch (err) {
-				loadError = err instanceof Error ? err.message : String(err);
-			}
-		})();
-
-		return () => {
-			cancelled = true;
-			local?.dispose();
-			sceneHandle = null;
-		};
-	});
-
-	// Реактивные обновления — содержимое посуды, выделение, motion.
-	$effect(() => {
-		if (sceneHandle) sceneHandle.setContainers(experiment.containers);
-	});
-	$effect(() => {
-		if (sceneHandle) sceneHandle.setSelectedContainer(selectedId);
-	});
-	$effect(() => {
-		if (sceneHandle) sceneHandle.setMotion(getMotionEnabled());
-	});
-
-	$effect(() => {
-		if (!sceneHandle) return;
-		const c = selectedContainer;
-		sceneHandle.setHeatingPlateDisplay(c ? c.temperature : null);
-	});
+	function applyIntensity(level: HeatingIntensity): void {
+		if (!selected) return;
+		const action = isHeatingAction(level, selected.temperature);
+		if (action === 'noop') return;
+		heat(selected.id, targetTemperatureFor(level) - selected.temperature);
+	}
 </script>
 
-<div class="visual-lab">
-	{#if !webglSupported}
-		<div class="fallback" role="status">
-			<p class="text-sm text-zinc-700 dark:text-zinc-300">
-				{t('lab.visual.noWebGL')}
-			</p>
+<div class="visual-lab-v2">
+	<Shelf containers={experiment.containers} {selectedId} onSelect={selectContainer} />
+
+	<div class="lab-body">
+		<BottlePanel substanceIds={BOTTLE_IDS} canPick={selectedId !== null} onPick={pickBottle} />
+
+		<div class="lab-stage">
+			<Workspace
+				container={selected}
+				onHeat={(d) => {
+					if (selected) heat(selected.id, d);
+				}}
+				onIntensity={applyIntensity}
+				onEmpty={() => {
+					if (selected) emptyContainer(selected.id);
+				}}
+				onRemove={() => {
+					if (selected) removeContainer(selected.id);
+				}}
+			/>
 		</div>
-	{:else}
-		<canvas bind:this={canvasEl} class="lab-canvas" aria-label={t('lab.visual.canvasLabel')}
-		></canvas>
-		{#if loadError}
-			<div class="error" role="alert">
-				<p class="text-sm">{loadError}</p>
-			</div>
-		{/if}
-		{#if selectedContainer}
-			<!-- Контролы выбранного контейнера: оверлей справа сверху. -->
-			<div class="sel-overlay">
-				<div class="sel-head">
-					<span class="sel-kind">
-						{t(`lab.containerKind.${selectedContainer.kind}`)}
-					</span>
-					<span class="sel-id">{selectedContainer.id}</span>
-				</div>
-				<div class="sel-temp">🌡 {fmtTemp(selectedContainer.temperature)}</div>
-				<div class="sel-buttons">
-					<button
-						type="button"
-						class="sel-btn"
-						aria-label={t('lab.coolStep')}
-						title={t('lab.coolStep')}
-						onclick={() => heat(selectedContainer.id, -25)}
-					>
-						−
-					</button>
-					<button
-						type="button"
-						class="sel-btn"
-						aria-label={t('lab.heatStep')}
-						title={t('lab.heatStep')}
-						onclick={() => heat(selectedContainer.id, 25)}
-					>
-						+
-					</button>
-					<button
-						type="button"
-						class="sel-btn sel-btn--empty"
-						aria-label={t('lab.emptyContainer')}
-						title={t('lab.emptyContainer')}
-						disabled={selectedContainer.contents.length === 0}
-						onclick={() => emptyContainer(selectedContainer.id)}
-					>
-						⌫
-					</button>
-					<button
-						type="button"
-						class="sel-btn sel-btn--remove"
-						aria-label={t('lab.removeContainer')}
-						title={t('lab.removeContainer')}
-						onclick={() => removeContainer(selectedContainer.id)}
-					>
-						✕
-					</button>
-				</div>
-			</div>
-		{/if}
-		<div class="hint" aria-hidden="true">
-			{#if !selectedId}
-				{t('lab.visual.selectContainerHint')}
-			{:else}
-				{t('lab.visual.pourHint')}
-			{/if}
-		</div>
-	{/if}
+	</div>
 </div>
 
 <style>
-	.visual-lab {
-		position: relative;
-		aspect-ratio: 16 / 10;
-		min-height: 360px;
-		width: 100%;
-		border-radius: 1rem;
-		overflow: hidden;
-		background: #e8eef4;
-		box-shadow:
-			0 1px 0 rgba(0, 0, 0, 0.04),
-			0 0 0 1px rgb(228 228 231);
-	}
-	@media (prefers-color-scheme: dark) {
-		.visual-lab {
-			box-shadow:
-				0 1px 0 rgba(0, 0, 0, 0.4),
-				0 0 0 1px rgb(63 63 70);
-		}
-	}
-	.lab-canvas {
-		display: block;
-		width: 100%;
-		height: 100%;
-		touch-action: none;
-	}
-	.fallback,
-	.error {
-		position: absolute;
-		inset: 0;
-		display: grid;
-		place-items: center;
-		padding: 1rem;
-		text-align: center;
-	}
-	.error {
-		background: rgba(254, 226, 226, 0.95);
-		color: rgb(127 29 29);
-	}
-	.hint {
-		position: absolute;
-		bottom: 0.5rem;
-		left: 0.75rem;
-		max-width: 80%;
-		font-size: 0.75rem;
-		color: rgba(0, 0, 0, 0.55);
-		background: rgba(255, 255, 255, 0.7);
-		padding: 0.2rem 0.5rem;
-		border-radius: 0.25rem;
-		pointer-events: none;
-	}
+	.visual-lab-v2 {
+		/* Пастельная палитра — единый источник, наследуется детьми через CSS custom properties. */
+		--lab-table: #f5efe6;
+		--lab-wall: #e7eef3;
+		--lab-glass-stroke: #a8b8c3;
+		--lab-glass-fill: rgba(220, 234, 242, 0.25);
+		--lab-apparatus: #5b6b78;
+		--lab-hot: #e8a87c;
+		--lab-cold: #a8dadc;
+		--lab-text: #3a3f4a;
+		--lab-focus: #bfd7ed;
 
-	.sel-overlay {
-		position: absolute;
-		top: 0.6rem;
-		right: 0.6rem;
-		min-width: 9rem;
-		padding: 0.5rem 0.6rem;
-		border-radius: 0.5rem;
-		background: rgba(255, 255, 255, 0.92);
-		box-shadow:
-			0 1px 0 rgba(0, 0, 0, 0.04),
-			0 4px 12px rgba(0, 0, 0, 0.08);
 		display: flex;
 		flex-direction: column;
-		gap: 0.35rem;
+		gap: 0.75rem;
+		border-radius: 1rem;
+		padding: 0.75rem;
+		background: var(--lab-table);
 	}
-	@media (prefers-color-scheme: dark) {
-		.sel-overlay {
-			background: rgba(24, 24, 27, 0.92);
-			box-shadow:
-				0 1px 0 rgba(0, 0, 0, 0.4),
-				0 4px 12px rgba(0, 0, 0, 0.3);
-		}
-	}
-	.sel-head {
+	.lab-body {
 		display: flex;
-		align-items: baseline;
-		justify-content: space-between;
-		gap: 0.5rem;
+		flex-wrap: wrap;
+		gap: 1rem;
+		align-items: stretch;
 	}
-	.sel-kind {
-		font-size: 0.7rem;
-		font-weight: 700;
-		text-transform: uppercase;
-		letter-spacing: 0.025em;
-		color: rgb(63 63 70);
-	}
-	.sel-id {
-		font-family: ui-monospace, SFMono-Regular, monospace;
-		font-size: 0.65rem;
-		color: rgb(161 161 170);
+	.lab-stage {
+		flex: 1 1 22rem;
+		border-radius: 0.75rem;
+		background: var(--lab-wall);
 	}
 	@media (prefers-color-scheme: dark) {
-		.sel-kind {
-			color: rgb(212 212 216);
-		}
-	}
-	.sel-temp {
-		font-size: 0.75rem;
-		color: rgb(82 82 91);
-	}
-	@media (prefers-color-scheme: dark) {
-		.sel-temp {
-			color: rgb(212 212 216);
-		}
-	}
-	.sel-buttons {
-		display: flex;
-		gap: 0.25rem;
-	}
-	.sel-btn {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		width: 1.7rem;
-		height: 1.7rem;
-		border-radius: 0.375rem;
-		font-size: 0.85rem;
-		font-weight: 600;
-		color: rgb(82 82 91);
-		background: rgb(244 244 245);
-		transition: background-color 100ms ease;
-	}
-	.sel-btn:hover:not(:disabled) {
-		background: rgb(228 228 231);
-	}
-	.sel-btn:disabled {
-		opacity: 0.4;
-		cursor: not-allowed;
-	}
-	.sel-btn--empty {
-		color: rgb(220 38 38);
-	}
-	.sel-btn--remove {
-		color: rgb(113 113 122);
-	}
-	@media (prefers-color-scheme: dark) {
-		.sel-btn {
-			color: rgb(212 212 216);
-			background: rgb(39 39 42);
-		}
-		.sel-btn:hover:not(:disabled) {
-			background: rgb(63 63 70);
-		}
-		.sel-btn--empty {
-			color: rgb(248 113 113);
-		}
-		.sel-btn--remove {
-			color: rgb(161 161 170);
+		.visual-lab-v2 {
+			--lab-table: #1f242b;
+			--lab-wall: #232a31;
+			--lab-glass-stroke: #5b6b78;
+			--lab-glass-fill: rgba(120, 150, 170, 0.18);
+			--lab-text: #dce4ea;
 		}
 	}
 </style>

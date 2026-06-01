@@ -132,3 +132,38 @@ export function liquidRadius(kind: ContainerKind, fillH: number): number {
 	}
 	return Math.max(0, minR);
 }
+
+/** Силуэт сосуда в SVG: симметричный замкнутый путь + размер в пикселях. */
+export interface GlasswareSilhouette {
+	/** SVG-атрибут `d`: контур сосуда (право-низ → верх → лево-низ → Z). */
+	path: string;
+	/** Полная ширина bbox в пикселях (2 × максимальный радиус × pxPerUnit). */
+	widthPx: number;
+	/** Полная высота bbox в пикселях (высота профиля × pxPerUnit). */
+	heightPx: number;
+}
+
+/**
+ * Построить силуэт сосуда для 2.5D-рендера. Профиль (r, y) зеркалится через вертикальную ось,
+ * y инвертируется (в SVG ось Y растёт вниз). Результат — замкнутый путь, который можно
+ * залить (стекло) и использовать как clipPath для жидкости.
+ */
+export function glasswareSilhouette(kind: ContainerKind, pxPerUnit: number): GlasswareSilhouette {
+	const pts = glasswareProfile(kind);
+	const heightUnits = glasswareHeight(kind);
+	const maxR = pts.reduce((m, p) => Math.max(m, p.r), 0);
+	const widthPx = maxR * 2 * pxPerUnit;
+	const heightPx = heightUnits * pxPerUnit;
+	const cx = widthPx / 2;
+	const sx = (r: number): string => (cx + r * pxPerUnit).toFixed(2);
+	const sy = (y: number): string => ((heightUnits - y) * pxPerUnit).toFixed(2);
+
+	// Старт в нижней точке оси, проход вверх по правой стороне.
+	let d = `M ${sx(0)} ${sy(0)}`;
+	for (const p of pts) d += ` L ${sx(p.r)} ${sy(p.y)}`;
+	// Возврат вниз по левой стороне (зеркало), сверху вниз.
+	for (let i = pts.length - 1; i >= 0; i--) d += ` L ${sx(-pts[i].r)} ${sy(pts[i].y)}`;
+	d += ' Z';
+
+	return { path: d, widthPx, heightPx };
+}

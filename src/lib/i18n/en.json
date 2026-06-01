@@ -120,6 +120,10 @@
 		"temperature": "Temperature",
 		"heatStep": "+25 K",
 		"coolStep": "−25 K",
+		"heater": {
+			"label": "НАГРЕВ",
+			"levelPrefix": "Heating level"
+		},
 		"resetTemp": "Room temp",
 		"containerKind": {
 			"test-tube": "Test tube",
@@ -173,11 +177,8 @@
 			"visual": "Visual"
 		},
 		"visual": {
-			"canvasLabel": "3D lab scene",
-			"dragHint": "Drag to rotate the scene",
-			"selectContainerHint": "Click a flask to select it. Drag the scene to rotate.",
-			"pourHint": "Click a bottle — its contents pour into the selected flask.",
-			"noWebGL": "Your browser doesn't support WebGL2. Switch to formal view — full functionality is there."
+			"empty": "Pick a container from the shelf to start working.",
+			"shelf": "Container shelf"
 		}
 	},
 	"element": {
